@@ -153,13 +153,6 @@ export default function App() {
                         <Camera className="w-4 h-4 mr-2" />
                         Take Photo
                       </Button>
-                      <Button
-                        onClick={handleBackToHome}
-                        variant="outline"
-                        className="px-4"
-                      >
-                        <Home className="w-4 h-4" />
-                      </Button>
                     </div>
                   </Card>
                 </motion.div>
