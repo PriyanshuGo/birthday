@@ -12,7 +12,7 @@ import { WishMessage } from "./components/WishMessage";
 import { BalloonGame } from "./components/BalloonGame";
 import { PhotoBooth } from "./components/PhotoBooth";
 import { Button } from "./components/ui/button";
-import { Home, RotateCcw } from "lucide-react";
+import { Home, RotateCcw, Camera } from "lucide-react";
 import { Card } from "./components/ui/card";
 
 export default function App() {
@@ -23,6 +23,18 @@ export default function App() {
   const [blowCount, setBlowCount] = useState(0);
   const [wishes, setWishes] = useState<string[]>([]);
   const cameraRef = useRef<BirthdayCameraFilterRef>(null);
+  const [photos, setPhotos] = useState<string[]>([]);
+  const [showFlash, setShowFlash] = useState(false);
+
+  const takePhoto = () => {
+    const canvasRef = cameraRef.current?.getCanvasRef();
+    if (canvasRef?.current) {
+      setShowFlash(true);
+      setTimeout(() => setShowFlash(false), 200);
+      const imageData = canvasRef.current.toDataURL("image/png");
+      setPhotos((prev) => [imageData, ...prev.slice(0, 4)]);
+    }
+  };
 
   const handleStartExperience = () => {
     setShowHero(false);
@@ -58,6 +70,19 @@ export default function App() {
     <div className="min-h-screen relative">
       <ParticleEffect />
       <ConfettiCelebration trigger={celebrationTriggered} />
+
+      {/* Flash effect */}
+      <AnimatePresence>
+        {showFlash && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: [0, 1, 0] }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="fixed inset-0 bg-white z-50 pointer-events-none"
+          />
+        )}
+      </AnimatePresence>
 
       <AnimatePresence mode="wait">
         {showHero ? (
@@ -111,6 +136,24 @@ export default function App() {
                       candlesLit={candlesLit}
                       ref={cameraRef}
                     />
+                    <div className="flex gap-4 mt-6">
+                      <Button
+                        onClick={handleReset}
+                        variant="default"
+                        className="flex-1 bg-gradient-to-r from-pink-500 to-purple-600"
+                        disabled={candlesLit}
+                      >
+                        <RotateCcw className="w-4 h-4 mr-2" />
+                        Relight Candles
+                      </Button>
+                      <Button
+                        onClick={takePhoto}
+                        className="flex-1 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white"
+                      >
+                        <Camera className="w-4 h-4 mr-2" />
+                        Take Photo
+                      </Button>
+                    </div>
                   </Card>
                 </motion.div>
 
@@ -160,19 +203,9 @@ export default function App() {
 
                       <div className="flex gap-3 mt-6">
                         <Button
-                          onClick={handleReset}
-                          variant="default"
-                          className="flex-1 bg-gradient-to-r from-pink-500 to-purple-600"
-                          disabled={candlesLit}
-                        >
-                          <RotateCcw className="w-4 h-4 mr-2" />
-                          Relight Candles
-                        </Button>
-
-                        <Button
                           onClick={handleBackToHome}
                           variant="outline"
-                          className="flex-1"
+                          className="w-full"
                         >
                           <Home className="w-4 h-4 mr-2" />
                           Home
@@ -263,7 +296,7 @@ export default function App() {
                   />
                   <BalloonGame />
                 </div>
-                <PhotoBooth cameraRef={cameraRef} />
+                <PhotoBooth photos={photos} setPhotos={setPhotos} />
               </motion.div>
             </div>
           </motion.div>
