@@ -1,0 +1,274 @@
+import { useState, useRef } from "react";
+import { motion, AnimatePresence } from "motion/react";
+import { BirthdayHero } from "./components/BirthdayHero";
+import {
+  BirthdayCameraFilter,
+  BirthdayCameraFilterRef,
+} from "./components/BirthdayCameraFilter";
+import { BlowDetector } from "./components/BlowDetector";
+import { ParticleEffect } from "./components/ParticleEffect";
+import { ConfettiCelebration } from "./components/ConfettiCelebration";
+import { WishMessage } from "./components/WishMessage";
+import { BalloonGame } from "./components/BalloonGame";
+import { PhotoBooth } from "./components/PhotoBooth";
+import { Button } from "./components/ui/button";
+import { Home, RotateCcw } from "lucide-react";
+import { Card } from "./components/ui/card";
+
+export default function App() {
+  const [showHero, setShowHero] = useState(true);
+  const [candlesLit, setCandlesLit] = useState(true);
+  const [celebrationTriggered, setCelebrationTriggered] =
+    useState(false);
+  const [blowCount, setBlowCount] = useState(0);
+  const [wishes, setWishes] = useState<string[]>([]);
+  const cameraRef = useRef<BirthdayCameraFilterRef>(null);
+
+  const handleStartExperience = () => {
+    setShowHero(false);
+  };
+
+  const handleBlowDetected = () => {
+    if (candlesLit) {
+      setCandlesLit(false);
+      setCelebrationTriggered(true);
+      setBlowCount((prev) => prev + 1);
+
+      // Reset celebration trigger after animation
+      setTimeout(() => setCelebrationTriggered(false), 3500);
+    }
+  };
+
+  const handleReset = () => {
+    setCandlesLit(true);
+    setCelebrationTriggered(false);
+  };
+
+  const handleBackToHome = () => {
+    setShowHero(true);
+    setCandlesLit(true);
+    setCelebrationTriggered(false);
+  };
+
+  const handleWishSubmit = (wish: string) => {
+    setWishes((prev) => [...prev, wish]);
+  };
+
+  return (
+    <div className="min-h-screen relative">
+      <ParticleEffect />
+      <ConfettiCelebration trigger={celebrationTriggered} />
+
+      <AnimatePresence mode="wait">
+        {showHero ? (
+          <motion.div
+            key="hero"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            transition={{ duration: 0.5 }}
+          >
+            <BirthdayHero
+              onStartExperience={handleStartExperience}
+            />
+          </motion.div>
+        ) : (
+          <motion.div
+            key="experience"
+            initial={{ opacity: 0, scale: 1.05 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.5 }}
+            className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50 py-8 px-4"
+          >
+            <div className="max-w-6xl mx-auto">
+              {/* Header */}
+              <motion.div
+                initial={{ y: -50, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ delay: 0.2 }}
+                className="text-center mb-8"
+              >
+                <h1 className="text-4xl md:text-6xl mb-4 bg-gradient-to-r from-pink-500 via-purple-500 to-blue-500 bg-clip-text text-transparent">
+                  🎂 Birthday AR Filter 🎂
+                </h1>
+                <p className="text-lg text-gray-700">
+                  Blow into your microphone to blow out the
+                  candles!
+                </p>
+              </motion.div>
+
+              <div className="grid md:grid-cols-2 gap-8 items-start">
+                {/* Camera Section */}
+                <motion.div
+                  initial={{ x: -50, opacity: 0 }}
+                  animate={{ x: 0, opacity: 1 }}
+                  transition={{ delay: 0.3 }}
+                >
+                  <Card className="p-6 bg-white/80 backdrop-blur-sm shadow-xl">
+                    <BirthdayCameraFilter
+                      onBlowDetected={handleBlowDetected}
+                      candlesLit={candlesLit}
+                      ref={cameraRef}
+                    />
+                  </Card>
+                </motion.div>
+
+                {/* Controls Section */}
+                <motion.div
+                  initial={{ x: 50, opacity: 0 }}
+                  animate={{ x: 0, opacity: 1 }}
+                  transition={{ delay: 0.4 }}
+                  className="space-y-6"
+                >
+                  {/* Blow Detector */}
+                  <Card className="p-8 bg-white/80 backdrop-blur-sm shadow-xl">
+                    <h2 className="text-2xl mb-6 text-center">
+                      🎤 Blow Detector
+                    </h2>
+                    <BlowDetector
+                      onBlowDetected={handleBlowDetected}
+                      isActive={candlesLit}
+                    />
+                  </Card>
+
+                  {/* Status Card */}
+                  <Card className="p-8 bg-white/80 backdrop-blur-sm shadow-xl">
+                    <h2 className="text-2xl mb-4 text-center">
+                      Status
+                    </h2>
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between p-4 bg-gradient-to-r from-pink-100 to-purple-100 rounded-lg">
+                        <span className="text-lg">
+                          Candles:
+                        </span>
+                        <span className="text-2xl">
+                          {candlesLit
+                            ? "🔥 Lit"
+                            : "💨 Blown Out"}
+                        </span>
+                      </div>
+
+                      <div className="flex items-center justify-between p-4 bg-gradient-to-r from-blue-100 to-purple-100 rounded-lg">
+                        <span className="text-lg">
+                          Wishes Made:
+                        </span>
+                        <span className="text-2xl">
+                          {blowCount} 🌟
+                        </span>
+                      </div>
+
+                      <div className="flex gap-3 mt-6">
+                        <Button
+                          onClick={handleReset}
+                          variant="default"
+                          className="flex-1 bg-gradient-to-r from-pink-500 to-purple-600"
+                          disabled={candlesLit}
+                        >
+                          <RotateCcw className="w-4 h-4 mr-2" />
+                          Relight Candles
+                        </Button>
+
+                        <Button
+                          onClick={handleBackToHome}
+                          variant="outline"
+                          className="flex-1"
+                        >
+                          <Home className="w-4 h-4 mr-2" />
+                          Home
+                        </Button>
+                      </div>
+                    </div>
+                  </Card>
+
+                  {/* Instructions */}
+                  <Card className="p-6 bg-gradient-to-br from-yellow-50 to-orange-50 shadow-xl">
+                    <h3 className="text-lg mb-3">
+                      📋 How to Use:
+                    </h3>
+                    <ol className="space-y-2 text-sm text-gray-700">
+                      <li className="flex items-start">
+                        <span className="mr-2">1️⃣</span>
+                        <span>
+                          Allow camera and microphone access
+                        </span>
+                      </li>
+                      <li className="flex items-start">
+                        <span className="mr-2">2️⃣</span>
+                        <span>
+                          See the birthday cake filter on your
+                          face!
+                        </span>
+                      </li>
+                      <li className="flex items-start">
+                        <span className="mr-2">3️⃣</span>
+                        <span>
+                          Make a wish and blow into your
+                          microphone
+                        </span>
+                      </li>
+                      <li className="flex items-start">
+                        <span className="mr-2">4️⃣</span>
+                        <span>
+                          Watch the candles go out and confetti
+                          fly! 🎉
+                        </span>
+                      </li>
+                    </ol>
+                  </Card>
+                </motion.div>
+              </div>
+
+              {/* Success Message */}
+              <AnimatePresence>
+                {!candlesLit && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 50, scale: 0.9 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: -50, scale: 0.9 }}
+                    className="mt-8"
+                  >
+                    <Card className="p-8 bg-gradient-to-r from-pink-500 to-purple-600 text-white text-center shadow-2xl">
+                      <motion.div
+                        animate={{
+                          scale: [1, 1.1, 1],
+                        }}
+                        transition={{
+                          duration: 1,
+                          repeat: Infinity,
+                        }}
+                      >
+                        <h2 className="text-3xl md:text-5xl mb-4">
+                          🎉 Happy Birthday! 🎉
+                        </h2>
+                        <p className="text-xl">
+                          May all your wishes come true! ✨
+                        </p>
+                      </motion.div>
+                    </Card>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
+              {/* Additional Interactive Section */}
+              <motion.div
+                initial={{ opacity: 0, y: 50 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.6 }}
+                className="mt-8 space-y-8"
+              >
+                <div className="grid md:grid-cols-2 gap-8">
+                  <WishMessage
+                    onWishSubmit={handleWishSubmit}
+                  />
+                  <BalloonGame />
+                </div>
+                <PhotoBooth cameraRef={cameraRef} />
+              </motion.div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
