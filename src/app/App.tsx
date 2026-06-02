@@ -153,6 +153,13 @@ export default function App() {
                         <Camera className="w-4 h-4 mr-2" />
                         Take Photo
                       </Button>
+                      <Button
+                        onClick={handleBackToHome}
+                        variant="outline"
+                        className="px-4"
+                      >
+                        <Home className="w-4 h-4" />
+                      </Button>
                     </div>
                   </Card>
                 </motion.div>
@@ -173,45 +180,6 @@ export default function App() {
                       onBlowDetected={handleBlowDetected}
                       isActive={candlesLit}
                     />
-                  </Card>
-
-                  {/* Status Card */}
-                  <Card className="p-8 bg-white/80 backdrop-blur-sm shadow-xl">
-                    <h2 className="text-2xl mb-4 text-center">
-                      Status
-                    </h2>
-                    <div className="space-y-4">
-                      <div className="flex items-center justify-between p-4 bg-gradient-to-r from-pink-100 to-purple-100 rounded-lg">
-                        <span className="text-lg">
-                          Candles:
-                        </span>
-                        <span className="text-2xl">
-                          {candlesLit
-                            ? "🔥 Lit"
-                            : "💨 Blown Out"}
-                        </span>
-                      </div>
-
-                      <div className="flex items-center justify-between p-4 bg-gradient-to-r from-blue-100 to-purple-100 rounded-lg">
-                        <span className="text-lg">
-                          Wishes Made:
-                        </span>
-                        <span className="text-2xl">
-                          {blowCount} 🌟
-                        </span>
-                      </div>
-
-                      <div className="flex gap-3 mt-6">
-                        <Button
-                          onClick={handleBackToHome}
-                          variant="outline"
-                          className="w-full"
-                        >
-                          <Home className="w-4 h-4 mr-2" />
-                          Home
-                        </Button>
-                      </div>
-                    </div>
                   </Card>
 
                   {/* Instructions */}
