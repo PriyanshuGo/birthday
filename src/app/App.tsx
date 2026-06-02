@@ -182,41 +182,6 @@ export default function App() {
                     />
                   </Card>
 
-                  {/* Instructions */}
-                  <Card className="p-6 bg-gradient-to-br from-yellow-50 to-orange-50 shadow-xl">
-                    <h3 className="text-lg mb-3">
-                      📋 How to Use:
-                    </h3>
-                    <ol className="space-y-2 text-sm text-gray-700">
-                      <li className="flex items-start">
-                        <span className="mr-2">1️⃣</span>
-                        <span>
-                          Allow camera and microphone access
-                        </span>
-                      </li>
-                      <li className="flex items-start">
-                        <span className="mr-2">2️⃣</span>
-                        <span>
-                          See the birthday cake filter on your
-                          face!
-                        </span>
-                      </li>
-                      <li className="flex items-start">
-                        <span className="mr-2">3️⃣</span>
-                        <span>
-                          Make a wish and blow into your
-                          microphone
-                        </span>
-                      </li>
-                      <li className="flex items-start">
-                        <span className="mr-2">4️⃣</span>
-                        <span>
-                          Watch the candles go out and confetti
-                          fly! 🎉
-                        </span>
-                      </li>
-                    </ol>
-                  </Card>
                 </motion.div>
               </div>
 
