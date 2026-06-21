@@ -25,6 +25,7 @@ export default function App() {
   const cameraRef = useRef<BirthdayCameraFilterRef>(null);
   const [photos, setPhotos] = useState<string[]>([]);
   const [showFlash, setShowFlash] = useState(false);
+  const [selectedFilter, setSelectedFilter] = useState<'cake' | 'ravans'>('cake');
 
   const takePhoto = () => {
     const canvasRef = cameraRef.current?.getCanvasRef();
@@ -170,6 +171,7 @@ export default function App() {
                     <BirthdayCameraFilter
                       onBlowDetected={handleBlowDetected}
                       candlesLit={candlesLit}
+                      filterType={selectedFilter}
                       ref={cameraRef}
                     />
                     <div className="flex gap-4 mt-6">
@@ -188,6 +190,25 @@ export default function App() {
                       >
                         <Camera className="w-4 h-4 mr-2" />
                         Take Photo
+                      </Button>
+                    </div>
+                    {/* Filter switcher */}
+                    <div className="flex gap-2 mt-4 justify-center">
+                      <Button
+                        onClick={() => setSelectedFilter('cake')}
+                        variant={selectedFilter === 'cake' ? 'default' : 'outline'}
+                        size="sm"
+                        className={selectedFilter === 'cake' ? 'bg-gradient-to-r from-pink-500 to-purple-600' : ''}
+                      >
+                        🎂 Cake
+                      </Button>
+                      <Button
+                        onClick={() => setSelectedFilter('ravans')}
+                        variant={selectedFilter === 'ravans' ? 'default' : 'outline'}
+                        size="sm"
+                        className={selectedFilter === 'ravans' ? 'bg-gradient-to-r from-red-600 to-orange-500' : ''}
+                      >
+                        👹 Ravans
                       </Button>
                     </div>
                   </Card>

@@ -3,10 +3,12 @@ import { Button } from './ui/button';
 import { Camera, CameraOff, Cake, AlertCircle } from 'lucide-react';
 import * as faceLandmarksDetection from '@tensorflow-models/face-landmarks-detection';
 import '@tensorflow/tfjs';
+import { drawRavansFacesOverlay } from './RavansFaces';
 
 interface BirthdayCameraFilterProps {
   onBlowDetected: () => void;
   candlesLit: boolean;
+  filterType?: 'cake' | 'ravans';
 }
 
 export interface BirthdayCameraFilterRef {
@@ -16,7 +18,7 @@ export interface BirthdayCameraFilterRef {
 type PermissionState = 'idle' | 'requesting' | 'granted' | 'denied';
 
 export const BirthdayCameraFilter = forwardRef<BirthdayCameraFilterRef, BirthdayCameraFilterProps>(
-  ({ onBlowDetected, candlesLit }, ref) => {
+  ({ onBlowDetected, candlesLit, filterType = 'cake' }, ref) => {
     const videoRef = useRef<HTMLVideoElement>(null);
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const demoCanvasRef = useRef<HTMLCanvasElement>(null);
@@ -69,8 +71,12 @@ export const BirthdayCameraFilter = forwardRef<BirthdayCameraFilterRef, Birthday
         ctx.ellipse(faceX, faceY + 20, 100, 130, 0, 0, Math.PI * 2);
         ctx.fill();
 
-        // Draw the birthday cake overlay below the face
-        drawBirthdayCake(ctx, faceX, faceY + 200, 180, candlesLit, frame);
+        // Draw the overlay based on selected filter
+        if (filterType === 'ravans') {
+          drawRavansFacesOverlay(ctx, faceX, faceY, 200, frame);
+        } else {
+          drawBirthdayCake(ctx, faceX, faceY + 200, 180, candlesLit, frame);
+        }
 
         // Floating particles
         for (let i = 0; i < 8; i++) {
@@ -171,7 +177,13 @@ export const BirthdayCameraFilter = forwardRef<BirthdayCameraFilterRef, Birthday
                 ? chin.y + eyeDistance * 0.7
                 : noseTip.y + eyeDistance * 1.7;
 
-              drawBirthdayCake(ctx, noseTip.x, cakeY, eyeDistance * 1.5, candlesLit, Date.now());
+              if (filterType === 'ravans') {
+                // For Ravans filter, draw multiple faces around the user's head
+                const faceCenterY = noseTip.y - eyeDistance * 0.3;
+                drawRavansFacesOverlay(ctx, noseTip.x, faceCenterY, eyeDistance * 1.5, Date.now());
+              } else {
+                drawBirthdayCake(ctx, noseTip.x, cakeY, eyeDistance * 1.5, candlesLit, Date.now());
+              }
             }
           }
         }
@@ -184,7 +196,7 @@ export const BirthdayCameraFilter = forwardRef<BirthdayCameraFilterRef, Birthday
       return () => {
         if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current);
       };
-    }, [detector, cameraActive, candlesLit]);
+    }, [detector, cameraActive, candlesLit, filterType]);
 
     // Cleanup on unmount
     useEffect(() => {
@@ -328,16 +340,6 @@ export const BirthdayCameraFilter = forwardRef<BirthdayCameraFilterRef, Birthday
               </Button>
             </div>
           )}
-        </div>
-
-        <div className="mt-4 text-center">
-          <p className="text-sm text-muted-foreground">
-            {permissionState === 'granted'
-              ? candlesLit
-                ? '🎂 Blow into your microphone to blow out the candles!'
-                : '🎉 Candles blown out!'
-              : '🎂 Demo mode — enable camera for the full AR experience!'}
-          </p>
         </div>
       </div>
     );
