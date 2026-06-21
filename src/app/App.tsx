@@ -36,8 +36,29 @@ export default function App() {
     }
   };
 
-  const handleStartExperience = () => {
-    setShowHero(false);
+  const [mediaError, setMediaError] = useState<string | null>(null);
+
+  const requestMediaAccess = async () => {
+    try {
+      await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+      setMediaError(null);
+      return true;
+    } catch (err) {
+      console.error('Media access denied:', err);
+      if (err && (err.name === 'NotAllowedError' || err.name === 'SecurityError')) {
+        setMediaError('Camera and microphone access were denied permanently. Please enable permissions in your browser settings and retry.');
+      } else {
+        setMediaError('Camera and microphone access are required to start the experience. Please grant permissions in your browser settings.');
+      }
+      return false;
+    }
+  };
+
+  const handleStartExperience = async () => {
+    const granted = await requestMediaAccess();
+    if (granted) {
+      setShowHero(false);
+    }
   };
 
   const handleBlowDetected = () => {
@@ -96,6 +117,21 @@ export default function App() {
             <BirthdayHero
               onStartExperience={handleStartExperience}
             />
+            {mediaError && (
+              <div className="mt-4 p-4 bg-red-100 text-red-800 rounded">
+                {mediaError}
+                <button
+                  onClick={requestMediaAccess}
+                  className="ml-4 px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600"
+                >
+                  Retry
+                </button>
+                {/* Provide instruction for permanent denial */}
+                <p className="mt-2 text-sm text-red-700">
+                  If you selected "Never allow", you need to change the permission in your browser settings.
+                </p>
+              </div>
+            )}
           </motion.div>
         ) : (
           <motion.div
