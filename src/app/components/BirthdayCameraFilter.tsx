@@ -73,7 +73,7 @@ export const BirthdayCameraFilter = forwardRef<BirthdayCameraFilterRef, Birthday
 
         // Draw the overlay based on selected filter
         if (filterType === 'ravans') {
-          drawRavansFacesOverlay(ctx, faceX, faceY, 200, frame);
+          drawRavansFacesOverlay(ctx, null, faceX, faceY, 200, frame);
         } else {
           drawBirthdayCake(ctx, faceX, faceY + 200, 180, candlesLit, frame);
         }
@@ -180,7 +180,7 @@ export const BirthdayCameraFilter = forwardRef<BirthdayCameraFilterRef, Birthday
               if (filterType === 'ravans') {
                 // For Ravans filter, draw multiple faces around the user's head
                 const faceCenterY = noseTip.y - eyeDistance * 0.3;
-                drawRavansFacesOverlay(ctx, noseTip.x, faceCenterY, eyeDistance * 1.5, Date.now());
+                drawRavansFacesOverlay(ctx, video, noseTip.x, faceCenterY, eyeDistance * 1.5, Date.now());
               } else {
                 drawBirthdayCake(ctx, noseTip.x, cakeY, eyeDistance * 1.5, candlesLit, Date.now());
               }
