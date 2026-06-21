@@ -5,7 +5,7 @@ import {
   BirthdayCameraFilter,
   BirthdayCameraFilterRef,
 } from "./components/BirthdayCameraFilter";
-import { BlowDetector } from "./components/BlowDetector";
+
 import { ParticleEffect } from "./components/ParticleEffect";
 import { ConfettiCelebration } from "./components/ConfettiCelebration";
 import { WishMessage } from "./components/WishMessage";
@@ -164,17 +164,6 @@ export default function App() {
                   transition={{ delay: 0.4 }}
                   className="space-y-6"
                 >
-                  {/* Blow Detector */}
-                  <Card className="p-8 bg-white/80 backdrop-blur-sm shadow-xl">
-                    <h2 className="text-2xl mb-6 text-center">
-                      🎤 Blow Detector
-                    </h2>
-                    <BlowDetector
-                      onBlowDetected={handleBlowDetected}
-                      isActive={candlesLit}
-                    />
-                  </Card>
-
                 </motion.div>
               </div>
 
