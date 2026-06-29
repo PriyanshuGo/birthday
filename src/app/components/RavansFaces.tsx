@@ -1,48 +1,36 @@
 import { motion } from 'motion/react';
+import { useState, useEffect } from 'react';
+
+export const CROWN_IMAGE_PATH = '/crown/crown.svg';
+
+export function useCrownImage() {
+  const [image, setImage] = useState<HTMLImageElement | null>(null);
+  useEffect(() => {
+    const img = new Image();
+    img.src = CROWN_IMAGE_PATH;
+    img.onload = () => setImage(img);
+  }, []);
+  return image;
+}
 
 interface RavansFacesProps {
   className?: string;
 }
 
 /**
- * Reusable SVG crown, drawn in a local coordinate space centered at (0,0)
- * with its bottom edge sitting at y=0 (so you just translate it to sit
- * right above a face ellipse). `scale` lets the main face get a BIG crown
- * and clones get progressively smaller ones.
- */
+ * Reusable SVG crown
 function Crown({ scale = 1 }: { scale?: number }) {
   const w = 10 * scale;
-  const h = 5.5 * scale;
-  const bandH = h * 0.3;
-
+  const h = 10 * scale; // Assuming aspect ratio near 1:1, or SVG handles it
   return (
-    <g>
-      {/* Crown body */}
-      <path
-        d={`M ${-w / 2} 0 L ${-w / 2} ${-bandH} L ${-w / 2 + w * 0.1} ${-h} L ${-w / 2 + w * 0.3} ${-bandH} L ${-w / 2 + w * 0.5} ${-h * 1.25} L ${-w / 2 + w * 0.7} ${-bandH} L ${-w / 2 + w * 0.9} ${-h} L ${w / 2} ${-bandH} L ${w / 2} 0 Z`}
-        fill="#FFC94A"
-        stroke="#B8860B"
-        strokeWidth={Math.max(0.15, scale * 0.15)}
-      />
-      {/* Band highlight */}
-      <rect x={-w / 2} y={-bandH} width={w} height={bandH} fill="rgba(255,255,255,0.18)" />
-      {/* Gems on spike tips */}
-      {[0.1, 0.5, 0.9].map((t, idx) => {
-        const cx = -w / 2 + w * t;
-        const cy = t === 0.5 ? -h * 1.25 : -h;
-        return (
-          <circle
-            key={idx}
-            cx={cx}
-            cy={cy}
-            r={Math.max(0.3, scale * 0.45)}
-            fill={t === 0.5 ? '#3A86FF' : '#E63946'}
-            stroke="rgba(0,0,0,0.25)"
-            strokeWidth={Math.max(0.1, scale * 0.08)}
-          />
-        );
-      })}
-    </g>
+    <image 
+      href={CROWN_IMAGE_PATH} 
+      x={-w / 2} 
+      y={-h} 
+      width={w} 
+      height={h} 
+      preserveAspectRatio="xMidYMax meet" 
+    />
   );
 }
 
@@ -116,91 +104,29 @@ export function RavansFaces({ className }: RavansFacesProps) {
  */
 export function drawCrown(
   ctx: CanvasRenderingContext2D,
+  crownImage: HTMLImageElement | null,
   centerX: number,
   topY: number,
   width: number,
   alpha: number = 1
 ) {
-  const crownWidth = width * 0.85;
-  const crownHeight = crownWidth * 0.55;
-  const bandHeight = crownHeight * 0.28;
+  if (!crownImage) return;
 
-  const left = centerX - crownWidth / 2;
-  const right = centerX + crownWidth / 2;
-  const baseY = topY;
-  const bandTopY = baseY - bandHeight;
-  const spikeTopY = bandTopY - (crownHeight - bandHeight);
+  const crownWidth = width * 0.85;
+  // Calculate height to maintain aspect ratio
+  const crownHeight = crownWidth * (crownImage.height / Math.max(1, crownImage.width));
 
   ctx.save();
   ctx.globalAlpha = alpha;
-
-  // --- Crown body (band + 5 spikes) ---
-  ctx.beginPath();
-  ctx.moveTo(left, baseY);
-  ctx.lineTo(left, bandTopY);
-
-  const numSpikes = 5;
-  const segW = crownWidth / numSpikes;
-  for (let i = 0; i < numSpikes; i++) {
-    const x0 = left + i * segW;
-    const xMid = x0 + segW / 2;
-    const x1 = x0 + segW;
-    const distFromCenter = Math.abs(i - (numSpikes - 1) / 2);
-    const peakY = spikeTopY + distFromCenter * (crownHeight * 0.18);
-    ctx.lineTo(xMid, peakY);
-    ctx.lineTo(x1, bandTopY);
-  }
-
-  ctx.lineTo(right, baseY);
-  ctx.closePath();
-
-  const grad = ctx.createLinearGradient(left, spikeTopY, left, baseY);
-  grad.addColorStop(0, '#FFE9A8');
-  grad.addColorStop(0.5, '#FFC94A');
-  grad.addColorStop(1, '#E8A317');
-  ctx.fillStyle = grad;
-  ctx.fill();
-
-  ctx.lineWidth = Math.max(1, crownWidth * 0.015);
-  ctx.strokeStyle = '#B8860B';
-  ctx.stroke();
-
-  // --- Base band highlight ---
-  ctx.beginPath();
-  ctx.rect(left, bandTopY, crownWidth, bandHeight);
-  ctx.fillStyle = 'rgba(255,255,255,0.15)';
-  ctx.fill();
-
-  // --- Gems: one on each spike tip ---
-  const gemRadiusBase = crownWidth * 0.045;
-  const gemColors = ['#E63946', '#2A9D8F', '#3A86FF', '#2A9D8F', '#E63946'];
-  for (let i = 0; i < numSpikes; i++) {
-    const x0 = left + i * segW;
-    const xMid = x0 + segW / 2;
-    const distFromCenter = Math.abs(i - (numSpikes - 1) / 2);
-    const peakY = spikeTopY + distFromCenter * (crownHeight * 0.18);
-    const r = gemRadiusBase * (1 - distFromCenter * 0.12);
-
-    ctx.beginPath();
-    ctx.arc(xMid, peakY, r, 0, Math.PI * 2);
-    ctx.fillStyle = gemColors[i];
-    ctx.fill();
-    ctx.lineWidth = Math.max(0.5, r * 0.18);
-    ctx.strokeStyle = 'rgba(0,0,0,0.25)';
-    ctx.stroke();
-  }
-
-  // --- Small gems along the band ---
-  const bandGemR = crownWidth * 0.025;
-  const bandGemY = bandTopY + bandHeight / 2;
-  for (let i = 1; i < numSpikes; i++) {
-    const x = left + i * segW;
-    ctx.beginPath();
-    ctx.arc(x, bandGemY, bandGemR, 0, Math.PI * 2);
-    ctx.fillStyle = '#FFFFFF';
-    ctx.globalAlpha = alpha * 0.85;
-    ctx.fill();
-  }
+  
+  // Draw the image centered horizontally, sitting right on topY
+  ctx.drawImage(
+    crownImage, 
+    centerX - crownWidth / 2, 
+    topY - crownHeight, 
+    crownWidth, 
+    crownHeight
+  );
 
   ctx.restore();
 }
@@ -225,7 +151,8 @@ export function drawRavansFacesOverlay(
   centerX: number,
   centerY: number,
   faceSize: number,
-  frame: number
+  frame: number,
+  crownImage: HTMLImageElement | null
 ) {
   const numLeft = 4;
   const numRight = 5;
@@ -243,7 +170,7 @@ export function drawRavansFacesOverlay(
   // --- BIG crown on the main/center face first ---
   // Main face top-of-head sits at roughly centerY - faceHeight/2.
   const mainFaceTopY = centerY - faceHeight / 2;
-  drawCrown(ctx, centerX, mainFaceTopY, faceWidth * 1.15, 1);
+  drawCrown(ctx, crownImage, centerX, mainFaceTopY, faceWidth * 1.15, 1);
 
   for (let i = -numLeft; i <= numRight; i++) {
     if (i === 0) continue; // Skip the main face in the center (already drawn above)
@@ -290,7 +217,7 @@ export function drawRavansFacesOverlay(
         // sitting right above the clipped ellipse's top edge.
         const cloneCenterX = dx + actualDWidth / 2;
         const cloneTopY = dy;
-        drawCrown(ctx, cloneCenterX, cloneTopY, actualDWidth * 1.15, 0.9);
+        drawCrown(ctx, crownImage, cloneCenterX, cloneTopY, actualDWidth * 1.15, 0.9);
       }
     } else {
       // Fallback silhouette for demo mode
@@ -300,7 +227,7 @@ export function drawRavansFacesOverlay(
       ctx.fill();
 
       // Smaller crown above the silhouette clone too
-      drawCrown(ctx, dx + dWidth / 2, dy, dWidth * 1.15, 0.7);
+      drawCrown(ctx, crownImage, dx + dWidth / 2, dy, dWidth * 1.15, 0.7);
     }
   }
 

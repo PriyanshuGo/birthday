@@ -3,7 +3,7 @@ import { Button } from './ui/button';
 import { Camera, CameraOff, Cake, AlertCircle } from 'lucide-react';
 import * as faceLandmarksDetection from '@tensorflow-models/face-landmarks-detection';
 import '@tensorflow/tfjs';
-import { drawRavansFacesOverlay } from './RavansFaces';
+import { drawRavansFacesOverlay, useCrownImage } from './RavansFaces';
 
 interface BirthdayCameraFilterProps {
   onBlowDetected: () => void;
@@ -28,6 +28,7 @@ export const BirthdayCameraFilter = forwardRef<BirthdayCameraFilterRef, Birthday
     const animationFrameRef = useRef<number>();
     const demoAnimFrameRef = useRef<number>();
     const streamRef = useRef<MediaStream | null>(null);
+    const crownImage = useCrownImage();
 
     useImperativeHandle(ref, () => ({
       getCanvasRef: () => canvasRef,
@@ -73,7 +74,7 @@ export const BirthdayCameraFilter = forwardRef<BirthdayCameraFilterRef, Birthday
 
         // Draw the overlay based on selected filter
         if (filterType === 'ravans') {
-          drawRavansFacesOverlay(ctx, null, faceX, faceY, 200, frame);
+          drawRavansFacesOverlay(ctx, null, faceX, faceY, 200, frame, crownImage);
         } else {
           drawBirthdayCake(ctx, faceX, faceY + 200, 180, candlesLit, frame);
         }
@@ -180,7 +181,7 @@ export const BirthdayCameraFilter = forwardRef<BirthdayCameraFilterRef, Birthday
               if (filterType === 'ravans') {
                 // For Ravans filter, draw multiple faces around the user's head
                 const faceCenterY = noseTip.y - eyeDistance * 0.3;
-                drawRavansFacesOverlay(ctx, video, noseTip.x, faceCenterY, eyeDistance * 1.5, Date.now());
+                drawRavansFacesOverlay(ctx, video, noseTip.x, faceCenterY, eyeDistance * 1.5, Date.now(), crownImage);
               } else {
                 drawBirthdayCake(ctx, noseTip.x, cakeY, eyeDistance * 1.5, candlesLit, Date.now());
               }
