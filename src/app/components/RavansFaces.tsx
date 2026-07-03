@@ -2,12 +2,23 @@ import { motion } from 'motion/react';
 import { useState, useEffect } from 'react';
 
 export const CROWN_IMAGE_PATH = '/crown/crown.svg';
+export const MUSTACHE_IMAGE_PATH = '/mustache/mustache.svg';
 
 export function useCrownImage() {
   const [image, setImage] = useState<HTMLImageElement | null>(null);
   useEffect(() => {
     const img = new Image();
     img.src = CROWN_IMAGE_PATH;
+    img.onload = () => setImage(img);
+  }, []);
+  return image;
+}
+
+export function useMustacheImage() {
+  const [image, setImage] = useState<HTMLImageElement | null>(null);
+  useEffect(() => {
+    const img = new Image();
+    img.src = MUSTACHE_IMAGE_PATH;
     img.onload = () => setImage(img);
   }, []);
   return image;
@@ -30,6 +41,24 @@ function Crown({ scale = 1 }: { scale?: number }) {
       width={w} 
       height={h} 
       preserveAspectRatio="xMidYMax meet" 
+    />
+  );
+}
+
+/**
+ * Reusable SVG mustache, rendered using a custom image.
+ */
+function Mustache({ scale = 1 }: { scale?: number }) {
+  const w = 8 * scale;
+  const h = 4 * scale;
+  return (
+    <image
+      href={MUSTACHE_IMAGE_PATH}
+      x={-w / 2}
+      y={0}
+      width={w}
+      height={h}
+      preserveAspectRatio="xMidYMin meet"
     />
   );
 }
@@ -82,6 +111,10 @@ export function RavansFaces({ className }: RavansFacesProps) {
               <g transform={`translate(0, ${-ry})`}>
                 <Crown scale={crownScale} />
               </g>
+              {/* Mustache sits just below center of the face ellipse */}
+              <g transform={`translate(0, ${ry * 0.15})`}>
+                <Mustache scale={crownScale * 0.8} />
+              </g>
             </motion.g>
           );
         })}
@@ -118,14 +151,54 @@ export function drawCrown(
 
   ctx.save();
   ctx.globalAlpha = alpha;
-  
+
   // Draw the image centered horizontally, sitting right on topY
   ctx.drawImage(
-    crownImage, 
-    centerX - crownWidth / 2, 
-    topY - crownHeight, 
-    crownWidth, 
+    crownImage,
+    centerX - crownWidth / 2,
+    topY - crownHeight,
+    crownWidth,
     crownHeight
+  );
+
+  ctx.restore();
+}
+
+/**
+ * Draws a mustache on a canvas using a custom image, centered horizontally
+ * on (centerX, noseY), sized relative to `width`.
+ *
+ * @param ctx - Canvas 2D context
+ * @param mustacheImage - Preloaded HTMLImageElement of the mustache
+ * @param centerX - horizontal center of the face
+ * @param noseY - Y coordinate of the nose area (mustache top edge sits here)
+ * @param width - reference width (face width) used to scale the mustache
+ * @param alpha - opacity (0-1)
+ */
+export function drawMustache(
+  ctx: CanvasRenderingContext2D,
+  mustacheImage: HTMLImageElement | null,
+  centerX: number,
+  noseY: number,
+  width: number,
+  alpha: number = 1
+) {
+  if (!mustacheImage) return;
+
+  const mustacheWidth = width * 0.55;
+  // Calculate height to maintain aspect ratio
+  const mustacheHeight = mustacheWidth * (mustacheImage.height / Math.max(1, mustacheImage.width));
+
+  ctx.save();
+  ctx.globalAlpha = alpha;
+
+  // Draw the image centered horizontally, top edge at noseY
+  ctx.drawImage(
+    mustacheImage,
+    centerX - mustacheWidth / 2,
+    noseY,
+    mustacheWidth,
+    mustacheHeight
   );
 
   ctx.restore();
@@ -152,7 +225,8 @@ export function drawRavansFacesOverlay(
   centerY: number,
   faceSize: number,
   frame: number,
-  crownImage: HTMLImageElement | null
+  crownImage: HTMLImageElement | null,
+  mustacheImage: HTMLImageElement | null
 ) {
   const numLeft = 4;
   const numRight = 5;
@@ -171,6 +245,10 @@ export function drawRavansFacesOverlay(
   // Main face top-of-head sits at roughly centerY - faceHeight/2.
   const mainFaceTopY = centerY - faceHeight / 2;
   drawCrown(ctx, crownImage, centerX, mainFaceTopY, faceWidth * 1.15, 1);
+
+  // --- Mustache on the main/center face ---
+  const mainMustacheY = centerY + faceHeight * 0.1;
+  drawMustache(ctx, mustacheImage, centerX, mainMustacheY, faceWidth, 1);
 
   for (let i = -numLeft; i <= numRight; i++) {
     if (i === 0) continue; // Skip the main face in the center (already drawn above)
@@ -218,6 +296,10 @@ export function drawRavansFacesOverlay(
         const cloneCenterX = dx + actualDWidth / 2;
         const cloneTopY = dy;
         drawCrown(ctx, crownImage, cloneCenterX, cloneTopY, actualDWidth * 1.15, 0.9);
+
+        // Mustache on clone
+        const cloneMustacheY = dy + actualDHeight * 0.55;
+        drawMustache(ctx, mustacheImage, cloneCenterX, cloneMustacheY, actualDWidth, 0.9);
       }
     } else {
       // Fallback silhouette for demo mode
@@ -228,6 +310,9 @@ export function drawRavansFacesOverlay(
 
       // Smaller crown above the silhouette clone too
       drawCrown(ctx, crownImage, dx + dWidth / 2, dy, dWidth * 1.15, 0.7);
+
+      // Mustache on silhouette clone
+      drawMustache(ctx, mustacheImage, dx + dWidth / 2, dy + dHeight * 0.55, dWidth, 0.7);
     }
   }
 
