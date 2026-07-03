@@ -12,7 +12,7 @@ import { WishMessage } from "./components/WishMessage";
 import { BalloonGame } from "./components/BalloonGame";
 import { PhotoBooth } from "./components/PhotoBooth";
 import { Button } from "./components/ui/button";
-import { Home, RotateCcw, Camera } from "lucide-react";
+import { Home, RotateCcw, Camera, CameraOff, X } from "lucide-react";
 import { Card } from "./components/ui/card";
 
 export default function App() {
@@ -118,21 +118,6 @@ export default function App() {
             <BirthdayHero
               onStartExperience={handleStartExperience}
             />
-            {mediaError && (
-              <div className="mt-4 p-4 bg-red-100 text-red-800 rounded">
-                {mediaError}
-                <button
-                  onClick={requestMediaAccess}
-                  className="ml-4 px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600"
-                >
-                  Retry
-                </button>
-                {/* Provide instruction for permanent denial */}
-                <p className="mt-2 text-sm text-red-700">
-                  If you selected "Never allow", you need to change the permission in your browser settings.
-                </p>
-              </div>
-            )}
           </motion.div>
         ) : (
           <motion.div
@@ -272,6 +257,84 @@ export default function App() {
               </motion.div>
             </div>
           </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Media Error Modal */}
+      <AnimatePresence>
+        {mediaError && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            {/* Backdrop */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setMediaError(null)}
+              className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+            />
+
+            {/* Modal Content */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              transition={{ type: "spring", damping: 25, stiffness: 350 }}
+              className="relative w-full max-w-md bg-white/95 dark:bg-gray-900/95 backdrop-blur-md rounded-2xl shadow-2xl border border-red-100 dark:border-red-900/30 overflow-hidden p-6 z-10"
+            >
+              {/* Close Button */}
+              <button
+                onClick={() => setMediaError(null)}
+                className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800"
+                aria-label="Close"
+              >
+                <X className="w-5 h-5" />
+              </button>
+
+              <div className="flex flex-col items-center text-center">
+                {/* Decorative background pulse */}
+                <div className="relative mb-4">
+                  <div className="absolute inset-0 rounded-full bg-red-100 dark:bg-red-900/20 animate-ping opacity-75" />
+                  <div className="relative p-4 bg-red-50 dark:bg-red-900/30 rounded-full text-red-500">
+                    <CameraOff className="w-8 h-8" />
+                  </div>
+                </div>
+
+                <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
+                  Camera & Mic Required
+                </h3>
+                
+                <p className="text-gray-600 dark:text-gray-300 text-sm mb-6 leading-relaxed">
+                  {mediaError}
+                </p>
+
+                {/* Manual step-by-step instruction */}
+                <div className="bg-red-50/70 dark:bg-red-950/20 border border-red-100 dark:border-red-900/30 rounded-xl p-4 mb-6 text-left w-full space-y-2.5">
+                  <p className="text-xs font-semibold text-red-800 dark:text-red-300 flex items-center gap-1.5">
+                    <span className="inline-block w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
+                    MANUAL ACTION REQUIRED
+                  </p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 leading-normal">
+                    Since permissions are blocked, the browser will not show a prompt automatically. You must allow it manually:
+                  </p>
+                  <ol className="text-xs text-gray-700 dark:text-gray-300 list-decimal list-inside space-y-1.5 leading-relaxed bg-white/40 dark:bg-black/20 p-2.5 rounded-lg border border-gray-100 dark:border-gray-800">
+                    <li>Look at the browser <strong>address bar</strong> at the top.</li>
+                    <li>Click the <strong>Lock (🔒)</strong> or <strong>Camera (📹)</strong> icon left of the website name.</li>
+                    <li>Change both <strong>Camera</strong> and <strong>Microphone</strong> to <strong>Allow</strong>.</li>
+                    <li>Once allowed, close this popup and click <strong>Start Experience</strong> again, or refresh the page.</li>
+                  </ol>
+                </div>
+
+                <div className="w-full">
+                  <Button
+                    onClick={() => setMediaError(null)}
+                    className="w-full bg-gradient-to-r from-red-500 to-pink-600 hover:from-red-600 hover:to-pink-700 text-white font-medium shadow-md shadow-red-500/10 hover:shadow-red-500/20 transition-all hover:scale-[1.02] active:scale-[0.98]"
+                  >
+                    Got It
+                  </Button>
+                </div>
+              </div>
+            </motion.div>
+          </div>
         )}
       </AnimatePresence>
     </div>
