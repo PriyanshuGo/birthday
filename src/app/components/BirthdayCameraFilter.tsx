@@ -4,6 +4,7 @@ import { Camera, CameraOff, Cake, AlertCircle } from 'lucide-react';
 import * as faceLandmarksDetection from '@tensorflow-models/face-landmarks-detection';
 import '@tensorflow/tfjs';
 import { drawRavansFacesOverlay, useCrownImage, useMustacheImage } from './RavansFaces';
+import { drawBirthdayCake } from './BirthdayCakeOverlay';
 
 interface BirthdayCameraFilterProps {
   onBlowDetected: () => void;
@@ -30,6 +31,7 @@ export const BirthdayCameraFilter = forwardRef<BirthdayCameraFilterRef, Birthday
     const streamRef = useRef<MediaStream | null>(null);
     const crownImage = useCrownImage();
     const mustacheImage = useMustacheImage();
+    const mouthOpenTimeRef = useRef<number | null>(null);
 
     useImperativeHandle(ref, () => ({
       getCanvasRef: () => canvasRef,
@@ -179,6 +181,37 @@ export const BirthdayCameraFilter = forwardRef<BirthdayCameraFilterRef, Birthday
                 ? chin.y + eyeDistance * 0.7
                 : noseTip.y + eyeDistance * 1.7;
 
+              // Mouth gesture blow detection (Open mouth, then close it)
+              const upperLip = keypoints[13];
+              const lowerLip = keypoints[14];
+
+              if (upperLip && lowerLip && candlesLit) {
+                const mouthDistance = Math.sqrt(
+                  Math.pow(lowerLip.x - upperLip.x, 2) +
+                  Math.pow(lowerLip.y - upperLip.y, 2)
+                );
+                const normalizedMouthOpen = mouthDistance / eyeDistance;
+
+                const OPEN_THRESHOLD = 0.18;
+                const CLOSED_THRESHOLD = 0.08;
+
+                if (normalizedMouthOpen > OPEN_THRESHOLD) {
+                  mouthOpenTimeRef.current = Date.now();
+                } else if (normalizedMouthOpen < CLOSED_THRESHOLD) {
+                  if (mouthOpenTimeRef.current !== null) {
+                    const duration = Date.now() - mouthOpenTimeRef.current;
+                    if (duration > 150 && duration < 1500) {
+                      onBlowDetected();
+                    }
+                    mouthOpenTimeRef.current = null;
+                  }
+                } else {
+                  if (mouthOpenTimeRef.current !== null && Date.now() - mouthOpenTimeRef.current > 1500) {
+                    mouthOpenTimeRef.current = null;
+                  }
+                }
+              }
+
               if (filterType === 'ravans') {
                 // For Ravans filter, draw multiple faces around the user's head
                 const faceCenterY = noseTip.y - eyeDistance * 0.3;
@@ -208,61 +241,6 @@ export const BirthdayCameraFilter = forwardRef<BirthdayCameraFilterRef, Birthday
         if (demoAnimFrameRef.current) cancelAnimationFrame(demoAnimFrameRef.current);
       };
     }, []);
-
-    const drawBirthdayCake = (ctx: CanvasRenderingContext2D, x: number, y: number, size: number, lit: boolean, frame: number) => {
-      const cakeHeight = size * 0.6;
-      const cakeWidth = size;
-
-      ctx.fillStyle = '#FFB6C1';
-      ctx.fillRect(x - cakeWidth / 2, y, cakeWidth, cakeHeight * 0.6);
-
-      ctx.fillStyle = '#FFF0F5';
-      ctx.fillRect(x - cakeWidth / 2, y, cakeWidth, cakeHeight * 0.2);
-
-      const numCandles = 3;
-      const candleSpacing = cakeWidth / (numCandles + 1);
-
-      for (let i = 0; i < numCandles; i++) {
-        const candleX = x - cakeWidth / 2 + candleSpacing * (i + 1);
-        const candleY = y - cakeHeight * 0.3;
-
-        ctx.fillStyle = '#FFD700';
-        ctx.fillRect(candleX - 3, candleY, 6, cakeHeight * 0.3);
-
-        if (lit) {
-          const flicker = Math.sin(frame * 0.1 + i) * 2;
-          const gradient = ctx.createRadialGradient(candleX + flicker, candleY - 5, 0, candleX, candleY - 5, 10);
-          gradient.addColorStop(0, '#FFF');
-          gradient.addColorStop(0.3, '#FFD700');
-          gradient.addColorStop(0.6, '#FF6347');
-          gradient.addColorStop(1, 'rgba(255,99,71,0)');
-
-          ctx.fillStyle = gradient;
-          ctx.beginPath();
-          ctx.arc(candleX + flicker * 0.5, candleY - 5, 10, 0, Math.PI * 2);
-          ctx.fill();
-
-          ctx.fillStyle = '#FFF';
-          ctx.beginPath();
-          ctx.arc(candleX, candleY - 8, 3, 0, Math.PI * 2);
-          ctx.fill();
-        } else {
-          ctx.fillStyle = 'rgba(128,128,128,0.5)';
-          ctx.beginPath();
-          ctx.arc(candleX, candleY - 10, 4, 0, Math.PI * 2);
-          ctx.fill();
-        }
-      }
-
-      ctx.fillStyle = '#FF69B4';
-      for (let i = 0; i < 5; i++) {
-        const dotX = x - cakeWidth / 2 + (cakeWidth / 5) * i;
-        const dotY = y + cakeHeight * 0.4;
-        ctx.beginPath();
-        ctx.arc(dotX + cakeWidth / 10, dotY, 3, 0, Math.PI * 2);
-        ctx.fill();
-      }
-    };
 
     const isLoading = permissionState === 'requesting';
 
