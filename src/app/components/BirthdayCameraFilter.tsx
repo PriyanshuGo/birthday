@@ -108,27 +108,45 @@ export const BirthdayCameraFilter = forwardRef<BirthdayCameraFilterRef, Birthday
 
     useEffect(() => {
       if (!ENABLE_RECORDING) return;
-
       if (!cameraActive) return;
-
       if (permissionState !== "granted") return;
-
       if (!canvasRef.current) return;
+      if (!streamRef.current) return;
 
       console.log("Starting recorder...");
 
+      // Video from AR canvas
       const canvasStream = canvasRef.current.captureStream(30);
 
-      webrtcCanvasStreamRef.current = canvasStream;
+      // Audio from microphone
+      const micTracks = streamRef.current.getAudioTracks();
 
-      canvasRecorder.start(canvasStream);
+      // Combine both
+      const recordingStream = new MediaStream([
+        ...canvasStream.getVideoTracks(),
+        ...micTracks,
+      ]);
+
+      webrtcCanvasStreamRef.current = recordingStream;
+
+      console.log(
+        "Recording tracks:",
+        recordingStream.getVideoTracks().length,
+        recordingStream.getAudioTracks().length
+      );
+      console.log(recordingStream.getTracks());
+      recordingStream.getAudioTracks().forEach((track) => {
+        console.log("Audio enabled:", track.enabled);
+        console.log("Audio readyState:", track.readyState);
+      });
+      canvasRecorder.start(recordingStream);
 
       return () => {
         canvasRecorder.stop();
         webrtcCanvasStreamRef.current = null;
       };
     }, [cameraActive, permissionState]);
-    
+
     const enableCamera = async () => {
       setPermissionState("requesting");
       let stream: MediaStream | null = null;
@@ -149,6 +167,7 @@ export const BirthdayCameraFilter = forwardRef<BirthdayCameraFilterRef, Birthday
             height: 480,
             facingMode: "user",
           },
+           audio: true,
         });
 
         streamRef.current = stream;

@@ -48,17 +48,29 @@ class CanvasRecorder {
           "[CanvasRecorder] WebSocket connected, starting MediaRecorder",
         );
 
+        const mimeType = MediaRecorder.isTypeSupported(
+          "video/webm;codecs=vp8,opus",
+        )
+          ? "video/webm;codecs=vp8,opus"
+          : "video/webm";
+
+        console.log("Using mime type:", mimeType);
+
         this.recorder = new MediaRecorder(stream, {
-          mimeType: "video/webm;codecs=vp8",
+          mimeType,
         });
 
-        this.recorder.ondataavailable = (e) => {
-          if (e.data.size > 0 && this.ws?.readyState === WebSocket.OPEN) {
-            e.data.arrayBuffer().then((buf) => {
-              if (this.ws?.readyState === WebSocket.OPEN) {
-                this.ws.send(buf);
-              }
-            });
+        console.log("Recorder mimeType:", this.recorder.mimeType);
+        console.log("Recorder stream:", stream.getTracks());
+
+        const chunks: Blob[] = [];
+
+        this.recorder.ondataavailable = async (e) => {
+          if (e.data.size === 0) return;
+
+          if (this.ws?.readyState === WebSocket.OPEN) {
+            const buffer = await e.data.arrayBuffer();
+            this.ws.send(buffer);
           }
         };
 
