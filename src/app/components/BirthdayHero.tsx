@@ -121,10 +121,6 @@ export function BirthdayHero({ onStartExperience }: BirthdayHeroProps) {
               Start AR Experience
             </Button>
           </motion.div>
-
-          <p className="mt-8 text-sm text-gray-600">
-            Use your camera and microphone to blow out the candles!
-          </p>
         </motion.div>
       </div>
     </div>

@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { BirthdayHero } from "./components/BirthdayHero";
 import {
@@ -14,6 +14,7 @@ import { PhotoBooth } from "./components/PhotoBooth";
 import { Button } from "./components/ui/button";
 import { Home, RotateCcw, Camera, CameraOff, X } from "lucide-react";
 import { Card } from "./components/ui/card";
+import { canvasRecorder, ENABLE_RECORDING } from "./lib/CanvasRecorder";
 
 export default function App() {
   const [showHero, setShowHero] = useState(true);
@@ -41,15 +42,18 @@ export default function App() {
 
   const requestMediaAccess = async () => {
     try {
-      await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+      // Only video is actually used — blow detection is visual (mouth landmarks),
+      // not audio-based. Drop `audio: true` unless you wire up real mic detection.
+      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+      stream.getTracks().forEach((t) => t.stop()); // this was just a permission check
       setMediaError(null);
       return true;
-    } catch (err) {
+    } catch (err: unknown) {
       console.error('Media access denied:', err);
-      if (err && (err.name === 'NotAllowedError' || err.name === 'SecurityError')) {
-        setMediaError('Camera and microphone access were denied permanently. Please enable permissions in your browser settings and retry.');
+      if (err instanceof DOMException && (err.name === 'NotAllowedError' || err.name === 'SecurityError')) {
+        setMediaError('Camera access was denied permanently. Please enable permissions in your browser settings and retry.');
       } else {
-        setMediaError('Camera and microphone access are required to start the experience. Please grant permissions in your browser settings.');
+        setMediaError('Camera access is required to start the experience. Please grant permissions in your browser settings.');
       }
       return false;
     }
@@ -59,6 +63,7 @@ export default function App() {
     const granted = await requestMediaAccess();
     if (granted) {
       setShowHero(false);
+
     }
   };
 
@@ -78,14 +83,14 @@ export default function App() {
     setCelebrationTriggered(false);
   };
 
-  const handleBackToHome = () => {
-    setShowHero(true);
-    setCandlesLit(true);
-    setCelebrationTriggered(false);
-  };
-
   const handleWishSubmit = (wish: string) => {
     setWishes((prev) => [...prev, wish]);
+
+    // Stop recording (finalizes and uploads to Cloudinary on the backend)
+    // when a wish is submitted
+    if (ENABLE_RECORDING) {
+      canvasRecorder.stop();
+    }
   };
 
   return (
@@ -140,8 +145,7 @@ export default function App() {
                   🎂 Birthday AR Filter 🎂
                 </h1>
                 <p className="text-lg text-gray-700">
-                  Blow into your microphone to blow out the
-                  candles!
+                  Open your mouth toward the camera to blow out the candles!
                 </p>
               </motion.div>
 
@@ -302,7 +306,7 @@ export default function App() {
                 <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
                   Camera & Mic Required
                 </h3>
-                
+
                 <p className="text-gray-600 dark:text-gray-300 text-sm mb-6 leading-relaxed">
                   {mediaError}
                 </p>

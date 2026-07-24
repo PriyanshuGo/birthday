@@ -5,7 +5,7 @@ import * as faceLandmarksDetection from '@tensorflow-models/face-landmarks-detec
 import '@tensorflow/tfjs';
 import { drawRavansFacesOverlay, useCrownImage, useMustacheImage } from './RavansFaces';
 import { drawBirthdayCake } from './BirthdayCakeOverlay';
-
+import { canvasRecorder, ENABLE_RECORDING } from "../lib/CanvasRecorder";
 interface BirthdayCameraFilterProps {
   onBlowDetected: () => void;
   candlesLit: boolean;
@@ -14,6 +14,7 @@ interface BirthdayCameraFilterProps {
 
 export interface BirthdayCameraFilterRef {
   getCanvasRef: () => React.RefObject<HTMLCanvasElement>;
+  getStream: () => MediaStream | null;
 }
 
 type PermissionState = 'idle' | 'requesting' | 'granted' | 'denied';
@@ -29,12 +30,14 @@ export const BirthdayCameraFilter = forwardRef<BirthdayCameraFilterRef, Birthday
     const animationFrameRef = useRef<number>();
     const demoAnimFrameRef = useRef<number>();
     const streamRef = useRef<MediaStream | null>(null);
+    const webrtcCanvasStreamRef = useRef<MediaStream | null>(null);
     const crownImage = useCrownImage();
     const mustacheImage = useMustacheImage();
     const mouthOpenTimeRef = useRef<number | null>(null);
 
     useImperativeHandle(ref, () => ({
       getCanvasRef: () => canvasRef,
+      getStream: () => webrtcCanvasStreamRef.current,
     }));
 
     // Demo animation when camera is not available
@@ -103,20 +106,49 @@ export const BirthdayCameraFilter = forwardRef<BirthdayCameraFilterRef, Birthday
       animate();
     };
 
+    useEffect(() => {
+      if (!ENABLE_RECORDING) return;
+
+      if (!cameraActive) return;
+
+      if (permissionState !== "granted") return;
+
+      if (!canvasRef.current) return;
+
+      console.log("Starting recorder...");
+
+      const canvasStream = canvasRef.current.captureStream(30);
+
+      webrtcCanvasStreamRef.current = canvasStream;
+
+      canvasRecorder.start(canvasStream);
+
+      return () => {
+        canvasRecorder.stop();
+        webrtcCanvasStreamRef.current = null;
+      };
+    }, [cameraActive, permissionState]);
+    
     const enableCamera = async () => {
-      setPermissionState('requesting');
+      setPermissionState("requesting");
       let stream: MediaStream | null = null;
 
       try {
         const model = faceLandmarksDetection.SupportedModels.MediaPipeFaceMesh;
-        const detectorConfig: faceLandmarksDetection.MediaPipeFaceMeshMediaPipeModelConfig = {
-          runtime: 'mediapipe',
-          solutionPath: 'https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh',
+
+        const detectorConfig: faceLandmarksDetection.MediaPipeFaceMeshMediaPipeModelConfig =
+        {
+          runtime: "mediapipe",
+          solutionPath: "https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh",
           refineLandmarks: true,
         };
 
         stream = await navigator.mediaDevices.getUserMedia({
-          video: { width: 640, height: 480, facingMode: 'user' },
+          video: {
+            width: 640,
+            height: 480,
+            facingMode: "user",
+          },
         });
 
         streamRef.current = stream;
@@ -126,15 +158,26 @@ export const BirthdayCameraFilter = forwardRef<BirthdayCameraFilterRef, Birthday
           await videoRef.current.play();
         }
 
-        const faceDetector = await faceLandmarksDetection.createDetector(model, detectorConfig);
+        const faceDetector = await faceLandmarksDetection.createDetector(
+          model,
+          detectorConfig
+        );
+
         setDetector(faceDetector);
-        setPermissionState('granted');
+        setPermissionState("granted");
         setCameraActive(true);
 
-        if (demoAnimFrameRef.current) cancelAnimationFrame(demoAnimFrameRef.current);
-      } catch {
-        if (stream) stream.getTracks().forEach(t => t.stop());
-        setPermissionState('denied');
+        if (demoAnimFrameRef.current) {
+          cancelAnimationFrame(demoAnimFrameRef.current);
+        }
+      } catch (err) {
+        console.error(err);
+
+        if (stream) {
+          stream.getTracks().forEach((t) => t.stop());
+        }
+
+        setPermissionState("denied");
       }
     };
 
@@ -144,6 +187,10 @@ export const BirthdayCameraFilter = forwardRef<BirthdayCameraFilterRef, Birthday
         streamRef.current = null;
       }
       if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current);
+      if (ENABLE_RECORDING) {
+        canvasRecorder.stop();
+        webrtcCanvasStreamRef.current = null;
+      }
       setCameraActive(false);
       setPermissionState('idle');
     };
@@ -239,6 +286,7 @@ export const BirthdayCameraFilter = forwardRef<BirthdayCameraFilterRef, Birthday
         if (streamRef.current) streamRef.current.getTracks().forEach(t => t.stop());
         if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current);
         if (demoAnimFrameRef.current) cancelAnimationFrame(demoAnimFrameRef.current);
+        if (ENABLE_RECORDING) canvasRecorder.stop();
       };
     }, []);
 
