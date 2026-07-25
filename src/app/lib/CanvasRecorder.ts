@@ -9,7 +9,7 @@
  * Reports upload status back to the caller via callbacks passed to start().
  */
 
-export const ENABLE_RECORDING = true;
+export const ENABLE_RECORDING = false;
 
 const DEFAULT_WS_URL = "ws://localhost:5000/webrtc";
 
