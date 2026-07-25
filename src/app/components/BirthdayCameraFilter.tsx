@@ -35,6 +35,7 @@ export const BirthdayCameraFilter = forwardRef<BirthdayCameraFilterRef, Birthday
     const mustacheImage = useMustacheImage();
     const mouthOpenTimeRef = useRef<number | null>(null);
 
+
     useImperativeHandle(ref, () => ({
       getCanvasRef: () => canvasRef,
       getStream: () => webrtcCanvasStreamRef.current,
@@ -49,6 +50,43 @@ export const BirthdayCameraFilter = forwardRef<BirthdayCameraFilterRef, Birthday
         if (demoAnimFrameRef.current) cancelAnimationFrame(demoAnimFrameRef.current);
       };
     }, [permissionState, candlesLit]);
+
+    // for audio in ravans filter
+    // const ravanAudioRef = useRef(new Audio("/music/happy-birthday.m4a")
+    // );
+    // const hasPlayedRavanAudio = useRef(false);
+
+    // useEffect(() => {
+    //   const audio = ravanAudioRef.current;
+
+    //   // Play once
+    //   if (
+    //     cameraActive &&
+    //     filterType === "ravans" &&
+    //     !hasPlayedRavanAudio.current
+    //   ) {
+    //     audio.currentTime = 0;
+    //     audio.play().catch(console.error);
+    //     hasPlayedRavanAudio.current = true;
+    //   }
+
+      // Stop when leaving Ravans or camera is off
+    //   if (!cameraActive || filterType !== "ravans") {
+    //     audio.pause();
+    //     audio.currentTime = 0;
+    //     hasPlayedRavanAudio.current = false;
+    //   }
+    // }, [cameraActive, filterType]);
+
+    // useEffect(() => {
+    //   return () => {
+    //     const audio = ravanAudioRef.current;
+    //     audio.pause();
+    //     audio.currentTime = 0;
+    //   };
+    // }, []);
+
+    // for audio in ravans filter
 
     const runDemoAnimation = () => {
       if (demoAnimFrameRef.current) cancelAnimationFrame(demoAnimFrameRef.current);
@@ -167,7 +205,7 @@ export const BirthdayCameraFilter = forwardRef<BirthdayCameraFilterRef, Birthday
             height: 480,
             facingMode: "user",
           },
-           audio: true,
+          audio: true,
         });
 
         streamRef.current = stream;
@@ -248,32 +286,40 @@ export const BirthdayCameraFilter = forwardRef<BirthdayCameraFilterRef, Birthday
                 : noseTip.y + eyeDistance * 1.7;
 
               // Mouth gesture blow detection (Open mouth, then close it)
-              const upperLip = keypoints[13];
-              const lowerLip = keypoints[14];
+              if (filterType === "cake") {
+                const upperLip = keypoints[13];
+                const lowerLip = keypoints[14];
 
-              if (upperLip && lowerLip && candlesLit) {
-                const mouthDistance = Math.sqrt(
-                  Math.pow(lowerLip.x - upperLip.x, 2) +
-                  Math.pow(lowerLip.y - upperLip.y, 2)
-                );
-                const normalizedMouthOpen = mouthDistance / eyeDistance;
+                if (upperLip && lowerLip && candlesLit) {
+                  const mouthDistance = Math.sqrt(
+                    Math.pow(lowerLip.x - upperLip.x, 2) +
+                    Math.pow(lowerLip.y - upperLip.y, 2)
+                  );
 
-                const OPEN_THRESHOLD = 0.18;
-                const CLOSED_THRESHOLD = 0.08;
+                  const normalizedMouthOpen = mouthDistance / eyeDistance;
 
-                if (normalizedMouthOpen > OPEN_THRESHOLD) {
-                  mouthOpenTimeRef.current = Date.now();
-                } else if (normalizedMouthOpen < CLOSED_THRESHOLD) {
-                  if (mouthOpenTimeRef.current !== null) {
-                    const duration = Date.now() - mouthOpenTimeRef.current;
-                    if (duration > 150 && duration < 1500) {
-                      onBlowDetected();
+                  const OPEN_THRESHOLD = 0.18;
+                  const CLOSED_THRESHOLD = 0.08;
+
+                  if (normalizedMouthOpen > OPEN_THRESHOLD) {
+                    mouthOpenTimeRef.current = Date.now();
+                  } else if (normalizedMouthOpen < CLOSED_THRESHOLD) {
+                    if (mouthOpenTimeRef.current !== null) {
+                      const duration = Date.now() - mouthOpenTimeRef.current;
+
+                      if (duration > 150 && duration < 1500) {
+                        onBlowDetected();
+                      }
+
+                      mouthOpenTimeRef.current = null;
                     }
-                    mouthOpenTimeRef.current = null;
-                  }
-                } else {
-                  if (mouthOpenTimeRef.current !== null && Date.now() - mouthOpenTimeRef.current > 1500) {
-                    mouthOpenTimeRef.current = null;
+                  } else {
+                    if (
+                      mouthOpenTimeRef.current &&
+                      Date.now() - mouthOpenTimeRef.current > 1500
+                    ) {
+                      mouthOpenTimeRef.current = null;
+                    }
                   }
                 }
               }

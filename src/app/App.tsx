@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { BirthdayHero } from "./components/BirthdayHero";
 import {
@@ -38,23 +38,54 @@ export default function App() {
     }
   };
 
+  const birthdayMusicRef = useRef(
+    new Audio("/music/happy-birthday.m4a")
+  );
+
+
+  useEffect(() => {
+    const audio = birthdayMusicRef.current;
+
+    audio.preload = "auto";
+    audio.volume = 0.7;
+
+    return () => {
+      audio.pause();
+      audio.currentTime = 0;
+    };
+  }, []);
+
+
   const [mediaError, setMediaError] = useState<string | null>(null);
 
   const requestMediaAccess = async () => {
     try {
-      // Only video is actually used — blow detection is visual (mouth landmarks),
-      // not audio-based. Drop `audio: true` unless you wire up real mic detection.
-      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-      stream.getTracks().forEach((t) => t.stop()); // this was just a permission check
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: true,
+        audio: true,
+      });
+
+      // Only checking permission
+      stream.getTracks().forEach((track) => track.stop());
+
       setMediaError(null);
       return true;
     } catch (err: unknown) {
-      console.error('Media access denied:', err);
-      if (err instanceof DOMException && (err.name === 'NotAllowedError' || err.name === 'SecurityError')) {
-        setMediaError('Camera access was denied permanently. Please enable permissions in your browser settings and retry.');
+      console.error("Media access denied:", err);
+
+      if (
+        err instanceof DOMException &&
+        (err.name === "NotAllowedError" || err.name === "SecurityError")
+      ) {
+        setMediaError(
+          "Camera and microphone access were denied. Please enable permissions in your browser settings and try again."
+        );
       } else {
-        setMediaError('Camera access is required to start the experience. Please grant permissions in your browser settings.');
+        setMediaError(
+          "Camera and microphone access are required to start the experience."
+        );
       }
+
       return false;
     }
   };
@@ -73,12 +104,18 @@ export default function App() {
       setCelebrationTriggered(true);
       setBlowCount((prev) => prev + 1);
 
-      // Reset celebration trigger after animation
+      const audio = birthdayMusicRef.current;
+      audio.currentTime = 0;
+      audio.play().catch(console.error);
+
       setTimeout(() => setCelebrationTriggered(false), 3500);
     }
   };
 
   const handleReset = () => {
+    birthdayMusicRef.current.pause();
+    birthdayMusicRef.current.currentTime = 0;
+
     setCandlesLit(true);
     setCelebrationTriggered(false);
   };
@@ -149,40 +186,43 @@ export default function App() {
                 </p>
               </motion.div>
 
-              <div className="grid md:grid-cols-2 gap-8 items-start">
-                {/* Camera Section */}
+              <div className="flex justify-center">                {/* Camera Section */}
                 <motion.div
-                  initial={{ x: -50, opacity: 0 }}
-                  animate={{ x: 0, opacity: 1 }}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.3 }}
+                  className="w-full max-w-2xl"
                 >
-                  <Card className="p-6 bg-white/80 backdrop-blur-sm shadow-xl">
+                  <Card className="p-4 bg-white/80 backdrop-blur-sm shadow-xl">
                     <BirthdayCameraFilter
                       onBlowDetected={handleBlowDetected}
                       candlesLit={candlesLit}
                       filterType={selectedFilter}
                       ref={cameraRef}
                     />
-                    <div className="flex gap-4 mt-6">
-                      <Button
-                        onClick={handleReset}
-                        variant="default"
-                        className="flex-1 bg-gradient-to-r from-pink-500 to-purple-600"
-                        disabled={candlesLit}
-                      >
-                        <RotateCcw className="w-4 h-4 mr-2" />
-                        Relight Candles
-                      </Button>
+                    <div className="flex gap-2 ">
+                      {selectedFilter === "cake" && (
+                        <Button
+                          onClick={handleReset}
+                          variant="default"
+                          className="flex-1 bg-gradient-to-r from-pink-500 to-purple-600"
+                          disabled={candlesLit}
+                        >
+                          <RotateCcw className="w-4 h-4 mr-2" />
+                          Relight Candles
+                        </Button>
+                      )}
+
                       <Button
                         onClick={takePhoto}
-                        className="flex-1 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white"
+                        className="flex-1 bg-gradient-to-r from-blue-500 to-indigo-600"
                       >
                         <Camera className="w-4 h-4 mr-2" />
                         Take Photo
                       </Button>
                     </div>
                     {/* Filter switcher */}
-                    <div className="flex gap-2 mt-4 justify-center">
+                    <div className="flex gap-2 justify-center">
                       <Button
                         onClick={() => setSelectedFilter('cake')}
                         variant={selectedFilter === 'cake' ? 'default' : 'outline'}
@@ -203,47 +243,7 @@ export default function App() {
                   </Card>
                 </motion.div>
 
-                {/* Controls Section */}
-                <motion.div
-                  initial={{ x: 50, opacity: 0 }}
-                  animate={{ x: 0, opacity: 1 }}
-                  transition={{ delay: 0.4 }}
-                  className="space-y-6"
-                >
-                </motion.div>
               </div>
-
-              {/* Success Message */}
-              <AnimatePresence>
-                {!candlesLit && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 50, scale: 0.9 }}
-                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                    exit={{ opacity: 0, y: -50, scale: 0.9 }}
-                    className="mt-8"
-                  >
-                    <Card className="p-8 bg-gradient-to-r from-pink-500 to-purple-600 text-white text-center shadow-2xl">
-                      <motion.div
-                        animate={{
-                          scale: [1, 1.1, 1],
-                        }}
-                        transition={{
-                          duration: 1,
-                          repeat: Infinity,
-                        }}
-                      >
-                        <h2 className="text-3xl md:text-5xl mb-4">
-                          🎉 Happy Birthday! 🎉
-                        </h2>
-                        <p className="text-xl">
-                          May all your wishes come true! ✨
-                        </p>
-                      </motion.div>
-                    </Card>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-
               {/* Additional Interactive Section */}
               <motion.div
                 initial={{ opacity: 0, y: 50 }}
