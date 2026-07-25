@@ -11,7 +11,7 @@
 
 export const ENABLE_RECORDING = false;
 
-const DEFAULT_WS_URL = "ws://localhost:5000/webrtc";
+const DEFAULT_WS_URL = import.meta.env.VITE_WS_URL;
 
 export type RecordingStatus =
   | { type: "uploaded"; url: string }
