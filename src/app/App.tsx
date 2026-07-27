@@ -39,7 +39,7 @@ export default function App() {
   };
 
   const birthdayMusicRef = useRef(
-    new Audio("/music/happy-birthday.m4a")
+    new Audio("/music/happy-birthday.mp3")
   );
 
 

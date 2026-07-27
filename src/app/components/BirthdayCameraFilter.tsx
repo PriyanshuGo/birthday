@@ -52,7 +52,7 @@ export const BirthdayCameraFilter = forwardRef<BirthdayCameraFilterRef, Birthday
     }, [permissionState, candlesLit]);
 
     // for audio in ravans filter
-    // const ravanAudioRef = useRef(new Audio("/music/happy-birthday.m4a")
+    // const ravanAudioRef = useRef(new Audio("/audio/ravan.mp3")
     // );
     // const hasPlayedRavanAudio = useRef(false);
 
