@@ -1,27 +1,33 @@
 import { motion } from 'motion/react';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 
 export const CROWN_IMAGE_PATH = '/crown/crown1.svg';
 export const MUSTACHE_IMAGE_PATH = '/mustache/mustache1.svg';
 
 export function useCrownImage() {
-  const [image, setImage] = useState<HTMLImageElement | null>(null);
+  const imageRef = useRef<HTMLImageElement | null>(null);
   useEffect(() => {
     const img = new Image();
+    img.onload = () => imageRef.current = img;
     img.src = CROWN_IMAGE_PATH;
-    img.onload = () => setImage(img);
   }, []);
-  return image;
+  return imageRef.current;
 }
 
 export function useMustacheImage() {
-  const [image, setImage] = useState<HTMLImageElement | null>(null);
+  const imageRef = useRef<HTMLImageElement | null>(null);
+
   useEffect(() => {
     const img = new Image();
+
+    img.onload = () => {
+      imageRef.current = img;
+    };
+
     img.src = MUSTACHE_IMAGE_PATH;
-    img.onload = () => setImage(img);
   }, []);
-  return image;
+
+  return imageRef.current;
 }
 
 interface RavansFacesProps {
