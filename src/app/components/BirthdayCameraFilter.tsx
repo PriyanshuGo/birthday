@@ -119,7 +119,7 @@ export const BirthdayCameraFilter = forwardRef<BirthdayCameraFilterRef, Birthday
         if (filterType === 'ravans') {
           drawRavansFacesOverlay(ctx, null, faceX, faceY, 200, frame, crownImage, mustacheImage);
         } else {
-          drawBirthdayCake(ctx, faceX, faceY + 200, 180, candlesLit, frame);
+          drawBirthdayCake(ctx, faceX, faceY + 180, 180, candlesLit, frame);
         }
 
         // Floating particles
@@ -278,8 +278,8 @@ export const BirthdayCameraFilter = forwardRef<BirthdayCameraFilterRef, Birthday
               );
 
               const cakeY = chin
-                ? chin.y + eyeDistance * 0.7
-                : noseTip.y + eyeDistance * 1.7;
+                ? chin.y + eyeDistance * 0.5
+                : noseTip.y + eyeDistance * 1.5;
 
               // Mouth gesture blow detection (Open mouth, then close it)
               if (filterType === "cake") {
