@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Card } from './ui/card';
 
@@ -30,29 +30,34 @@ export function BalloonGame() {
         color: colors[Math.floor(Math.random() * colors.length)],
         delay: Math.random() * 2,
       };
-      
-      setBalloons(prev => [...prev.slice(-5), newBalloon]);
-    }, 2000);
+
+      setBalloons(prev => [...prev.slice(-6), newBalloon]);
+    }, 3000);
 
     return () => clearInterval(interval);
   }, []);
 
   const playPopSound = () => {
     try {
-      const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+      const audioCtxRef = useRef<AudioContext | null>(null);
+      if (!audioCtxRef.current) {
+        audioCtxRef.current = new AudioContext();
+      }
+
+      const ctx = audioCtxRef.current;
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
-      
+
       osc.type = 'sine';
       osc.frequency.setValueAtTime(400, ctx.currentTime);
       osc.frequency.exponentialRampToValueAtTime(1200, ctx.currentTime + 0.08);
-      
+
       gain.gain.setValueAtTime(0.3, ctx.currentTime);
       gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.08);
-      
+
       osc.connect(gain);
       gain.connect(ctx.destination);
-      
+
       osc.start();
       osc.stop(ctx.currentTime + 0.08);
     } catch (e) {
@@ -62,17 +67,17 @@ export function BalloonGame() {
 
   const popBalloon = (e: React.MouseEvent<HTMLDivElement>, id: number, color: string) => {
     e.stopPropagation();
-    
+
     // Play satisfying popping sound
     playPopSound();
 
     const rect = e.currentTarget.parentElement?.getBoundingClientRect();
     const balloonRect = e.currentTarget.getBoundingClientRect();
-    
+
     if (rect && balloonRect) {
       const x = balloonRect.left - rect.left + balloonRect.width / 2;
       const y = balloonRect.top - rect.top + balloonRect.height / 2;
-      
+
       const newEffect = {
         id: Date.now() + Math.random(),
         x,
@@ -94,19 +99,22 @@ export function BalloonGame() {
       <div className="absolute top-4 right-4 bg-white/80 px-4 py-2 rounded-full shadow-lg z-10">
         <span className="text-sm font-semibold">🎈 Popped: {score}</span>
       </div>
-      
+
       <h3 className="text-lg mb-4 font-semibold">Pop the Balloons!</h3>
-      
+
       <div className="absolute inset-0 overflow-hidden">
         <AnimatePresence>
           {balloons.map((balloon) => (
             <motion.div
               key={balloon.id}
+              onAnimationComplete={() => {
+                setBalloons(prev => prev.filter(b => b.id !== balloon.id));
+              }}
               initial={{ y: '100%', scale: 0, opacity: 1 }}
               animate={{ y: '-120%', scale: 1, opacity: 1 }}
               exit={{ scale: 1.5, opacity: 0 }}
               transition={{
-                y: { duration: 8, delay: balloon.delay, ease: 'linear' },
+                y: { duration: 6, delay: balloon.delay, ease: 'linear' },
                 scale: { duration: 0.2, ease: 'easeOut' },
                 opacity: { duration: 0.2, ease: 'easeOut' },
                 default: { duration: 8, delay: balloon.delay, ease: 'linear' }
@@ -116,13 +124,10 @@ export function BalloonGame() {
               onClick={(e) => popBalloon(e, balloon.id, balloon.color)}
             >
               <motion.div
-                animate={{
-                  x: [0, 10, -10, 0],
-                }}
+                animate={{ x: [0, 4, 0] }}
                 transition={{
                   duration: 2,
-                  repeat: Infinity,
-                  ease: 'easeInOut',
+                  repeat: 2,
                 }}
               >
                 <svg width="60" height="80" viewBox="0 0 60 80">

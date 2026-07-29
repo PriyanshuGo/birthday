@@ -52,39 +52,39 @@ export const BirthdayCameraFilter = forwardRef<BirthdayCameraFilterRef, Birthday
     }, [permissionState, candlesLit]);
 
     // for audio in ravans filter
-    // const ravanAudioRef = useRef(new Audio("/audio/ravan.mp3")
-    // );
-    // const hasPlayedRavanAudio = useRef(false);
+    const ravanAudioRef = useRef(new Audio("/audio/ravan.mp3")
+    );
+    const hasPlayedRavanAudio = useRef(false);
 
-    // useEffect(() => {
-    //   const audio = ravanAudioRef.current;
+    useEffect(() => {
+      const audio = ravanAudioRef.current;
 
-    //   // Play once
-    //   if (
-    //     cameraActive &&
-    //     filterType === "ravans" &&
-    //     !hasPlayedRavanAudio.current
-    //   ) {
-    //     audio.currentTime = 0;
-    //     audio.play().catch(console.error);
-    //     hasPlayedRavanAudio.current = true;
-    //   }
+      // Play once
+      if (
+        cameraActive &&
+        filterType === "ravans" &&
+        !hasPlayedRavanAudio.current
+      ) {
+        audio.currentTime = 0;
+        audio.play().catch(console.error);
+        hasPlayedRavanAudio.current = true;
+      }
 
       // Stop when leaving Ravans or camera is off
-    //   if (!cameraActive || filterType !== "ravans") {
-    //     audio.pause();
-    //     audio.currentTime = 0;
-    //     hasPlayedRavanAudio.current = false;
-    //   }
-    // }, [cameraActive, filterType]);
+      if (!cameraActive || filterType !== "ravans") {
+        audio.pause();
+        audio.currentTime = 0;
+        hasPlayedRavanAudio.current = false;
+      }
+    }, [cameraActive, filterType]);
 
-    // useEffect(() => {
-    //   return () => {
-    //     const audio = ravanAudioRef.current;
-    //     audio.pause();
-    //     audio.currentTime = 0;
-    //   };
-    // }, []);
+    useEffect(() => {
+      return () => {
+        const audio = ravanAudioRef.current;
+        audio.pause();
+        audio.currentTime = 0;
+      };
+    }, []);
 
     // for audio in ravans filter
 
