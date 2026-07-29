@@ -258,10 +258,10 @@ export function drawRavansFacesOverlay(
     let dx = 0;
     if (i > 0) {
       // Right side: start from right edge of main face
-      dx = centerX + (faceWidth / 2) + gap + (i - 1) * dWidth * 0.65;
+      dx = centerX + (faceWidth / 2) - gap + (i - 1) * dWidth * 0.65;
     } else {
       // Left side: start from left edge of main face, shift left by clone width
-      dx = centerX - (faceWidth / 2) - gap - dWidth - (Math.abs(i) - 1) * dWidth * 0.65;
+      dx = centerX - (faceWidth / 2) - gap - dWidth - (Math.abs(i) - 1.2) * dWidth * 0.65;
     }
 
     // Vertically center the scaled down faces relative to the main face

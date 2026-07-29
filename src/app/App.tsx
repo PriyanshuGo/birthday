@@ -1,18 +1,24 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { BirthdayHero } from "./components/BirthdayHero";
+import { lazy, Suspense } from "react";
+
 import {
   BirthdayCameraFilter,
   BirthdayCameraFilterRef,
 } from "./components/BirthdayCameraFilter";
 
+const PhotoBooth = lazy(() =>
+  import("./components/PhotoBooth")
+);
+
+const WishMessage = lazy(() =>
+  import("./components/WishMessage")
+);
 import { ParticleEffect } from "./components/ParticleEffect";
 import { ConfettiCelebration } from "./components/ConfettiCelebration";
-import { WishMessage } from "./components/WishMessage";
-import { BalloonGame } from "./components/BalloonGame";
-import { PhotoBooth } from "./components/PhotoBooth";
 import { Button } from "./components/ui/button";
-import { Home, RotateCcw, Camera, CameraOff, X } from "lucide-react";
+import { RotateCcw, Camera, CameraOff, X } from "lucide-react";
 import { Card } from "./components/ui/card";
 import { canvasRecorder, ENABLE_RECORDING } from "./lib/CanvasRecorder";
 
@@ -28,7 +34,7 @@ export default function App() {
   const [showFlash, setShowFlash] = useState(false);
   const [selectedFilter, setSelectedFilter] = useState<'cake' | 'ravans'>('cake');
 
-  const takePhoto = () => {
+  const takePhoto = useCallback(() => {
     const canvasRef = cameraRef.current?.getCanvasRef();
     if (canvasRef?.current) {
       setShowFlash(true);
@@ -36,7 +42,7 @@ export default function App() {
       const imageData = canvasRef.current.toDataURL("image/png");
       setPhotos((prev) => [imageData, ...prev.slice(0, 4)]);
     }
-  };
+  }, []);
 
   const birthdayMusicRef = useRef(
     new Audio("/music/happy-birthday.mp3")
@@ -46,7 +52,7 @@ export default function App() {
   useEffect(() => {
     const audio = birthdayMusicRef.current;
 
-    audio.preload = "auto";
+    audio.preload = "metadata";
     audio.volume = 0.7;
 
     return () => {
@@ -98,7 +104,7 @@ export default function App() {
     }
   };
 
-  const handleBlowDetected = () => {
+  const handleBlowDetected = useCallback(() => {
     if (candlesLit) {
       setCandlesLit(false);
       setCelebrationTriggered(true);
@@ -110,44 +116,45 @@ export default function App() {
 
       setTimeout(() => setCelebrationTriggered(false), 3500);
     }
-  };
+  }, [])
 
-  const handleReset = () => {
+  const handleReset = useCallback(() => {
     birthdayMusicRef.current.pause();
     birthdayMusicRef.current.currentTime = 0;
 
     setCandlesLit(true);
     setCelebrationTriggered(false);
-  };
+  }, [])
 
-const handleWishSubmit = async (wish: string) => {
-  try {
-    const response = await fetch("https://formspree.io/f/xdaqjoad", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Accept: "application/json",
-      },
-      body: JSON.stringify({
-        message: wish,
-      }),
-    });
+  const handleWishSubmit = useCallback(async (wish: string) => {
+    try {
+      const response = await fetch("https://formspree.io/f/xdaqjoad", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+        body: JSON.stringify({
+          message: wish,
+        }),
+      });
 
-    if (!response.ok) {
-      throw new Error("Failed to submit wish");
+      if (!response.ok) {
+        throw new Error("Failed to submit wish");
+      }
+
+      console.log("Wish sent!");
+    } catch (error) {
+      console.error(error);
     }
-
-    console.log("Wish sent!");
-  } catch (error) {
-    console.error(error);
-  }
-};
+  }, [])
 
   return (
     <div className="min-h-screen relative">
-      <ParticleEffect />
-      <ConfettiCelebration trigger={celebrationTriggered} />
-
+      {showHero && <ParticleEffect />}
+      {celebrationTriggered && (
+        <ConfettiCelebration trigger />
+      )}
       {/* Flash effect */}
       <AnimatePresence>
         {showFlash && (
@@ -207,12 +214,15 @@ const handleWishSubmit = async (wish: string) => {
                   className="w-full max-w-2xl"
                 >
                   <Card className="p-4 bg-white/80 backdrop-blur-sm shadow-xl">
-                    <BirthdayCameraFilter
-                      onBlowDetected={handleBlowDetected}
-                      candlesLit={candlesLit}
-                      filterType={selectedFilter}
-                      ref={cameraRef}
-                    />
+                    <Suspense fallback={null}>
+
+                      <BirthdayCameraFilter
+                        onBlowDetected={handleBlowDetected}
+                        candlesLit={candlesLit}
+                        filterType={selectedFilter}
+                        ref={cameraRef}
+                      />
+                    </Suspense>
                     <div className="flex gap-2 ">
                       {selectedFilter === "cake" && (
                         <Button
@@ -264,13 +274,16 @@ const handleWishSubmit = async (wish: string) => {
                 transition={{ delay: 0.6 }}
                 className="mt-8 space-y-8"
               >
-                <div className="grid md:grid-cols-2 gap-8">
-                  <WishMessage
-                    onWishSubmit={handleWishSubmit}
-                  />
-                  <BalloonGame />
+                <div className="">
+                  <Suspense fallback={null}>
+                    <WishMessage
+                      onWishSubmit={handleWishSubmit}
+                    />
+                  </Suspense>
                 </div>
-                <PhotoBooth photos={photos} setPhotos={setPhotos} />
+                <Suspense fallback={null}>
+                  <PhotoBooth photos={photos} setPhotos={setPhotos} />
+                </Suspense>
               </motion.div>
             </div>
           </motion.div>

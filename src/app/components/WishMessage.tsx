@@ -4,12 +4,13 @@ import { Button } from './ui/button';
 import { Textarea } from './ui/textarea';
 import { Card } from './ui/card';
 import { Sparkles, Send } from 'lucide-react';
+import React from 'react';
 
 interface WishMessageProps {
   onWishSubmit: (wish: string) => void;
 }
 
-export function WishMessage({ onWishSubmit }: WishMessageProps) {
+const WishMessage = ({ onWishSubmit }: WishMessageProps) => {
   const [wish, setWish] = useState('');
   const [submitted, setSubmitted] = useState(false);
 
@@ -72,3 +73,5 @@ export function WishMessage({ onWishSubmit }: WishMessageProps) {
     </Card>
   );
 }
+
+export default React.memo(WishMessage);

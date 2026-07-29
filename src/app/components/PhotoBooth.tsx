@@ -4,12 +4,13 @@ import { Card } from './ui/card';
 import { Camera, Download, X } from 'lucide-react';
 import { MoreVertical } from "lucide-react";
 import { useState } from 'react';
+import React from 'react';
 interface PhotoBoothProps {
   photos: string[];
   setPhotos: React.Dispatch<React.SetStateAction<string[]>>;
 }
 
-export function PhotoBooth({ photos, setPhotos }: PhotoBoothProps) {
+const PhotoBooth = ({ photos, setPhotos }: PhotoBoothProps) => {
 
   const [openMenu, setOpenMenu] = useState<number | null>(null);
 
@@ -108,3 +109,5 @@ export function PhotoBooth({ photos, setPhotos }: PhotoBoothProps) {
     </Card>
   );
 }
+
+export default React.memo(PhotoBooth);
