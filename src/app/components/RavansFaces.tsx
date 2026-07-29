@@ -1,5 +1,4 @@
-import { motion } from 'motion/react';
-import { useState, useEffect, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 
 export const CROWN_IMAGE_PATH = '/crown/crown1.svg';
 export const MUSTACHE_IMAGE_PATH = '/mustache/mustache1.svg';
@@ -28,105 +27,6 @@ export function useMustacheImage() {
   }, []);
 
   return imageRef.current;
-}
-
-interface RavansFacesProps {
-  className?: string;
-}
-
-/**
- * Reusable SVG crown
-function Crown({ scale = 1 }: { scale?: number }) {
-  const w = 10 * scale;
-  const h = 10 * scale; // Assuming aspect ratio near 1:1, or SVG handles it
-  return (
-    <image 
-      href={CROWN_IMAGE_PATH} 
-      x={-w / 2} 
-      y={-h} 
-      width={w} 
-      height={h} 
-      preserveAspectRatio="xMidYMax meet" 
-    />
-  );
-}
-
-/**
- * Reusable SVG mustache, rendered using a custom image.
- */
-function Mustache({ scale = 1 }: { scale?: number }) {
-  const w = 8 * scale;
-  const h = 4 * scale;
-  return (
-    <image
-      href={MUSTACHE_IMAGE_PATH}
-      x={-w / 2}
-      y={0}
-      width={w}
-      height={h}
-      preserveAspectRatio="xMidYMin meet"
-    />
-  );
-}
-
-/**
- * Decorative overlay for the hero/preview screen.
- * Shows animated multiple face silhouettes arranged in a straight line,
- * each topped with a crown — the center (main) face gets a BIG crown,
- * side clones get progressively smaller crowns based on distance from center.
- */
-export function RavansFaces({ className }: RavansFacesProps) {
-  // 4 on left, 5 on right
-  const leftFaces = Array.from({ length: 4 }, (_, i) => -4 + i);
-  const rightFaces = Array.from({ length: 5 }, (_, i) => 1 + i);
-  const faces = [...leftFaces, ...rightFaces]; // -4, -3, -2, -1, 1, 2, 3, 4, 5
-  const mainFacePos = 0; // center / main face slot
-
-  // include the main face explicitly so it renders (and gets the big crown)
-  const allPositions = [mainFacePos, ...faces];
-
-  return (
-    <div className={className} style={{ pointerEvents: 'none' }}>
-      <svg viewBox="0 0 100 100" className="w-full h-full opacity-25">
-        {allPositions.map((pos, i) => {
-          const x = 50 + pos * 10; // spacing
-          const y = 50;
-          const isMain = pos === mainFacePos;
-
-          // Crown scale: main face gets the biggest crown (1.4x),
-          // clones shrink slightly the further they are from center.
-          const crownScale = isMain ? 1.4 : Math.max(0.6, 1 - Math.abs(pos) * 0.06);
-          const rx = isMain ? 5 : 4;
-          const ry = isMain ? 6.5 : 5.5;
-
-          return (
-            <motion.g
-              key={i}
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: [0.3, 0.6, 0.3], scale: [0.9, 1.1, 0.9] }}
-              transition={{
-                duration: 3,
-                repeat: Infinity,
-                delay: i * 0.1,
-                ease: 'easeInOut',
-              }}
-              transform={`translate(${x}, ${y})`}
-            >
-              <ellipse cx="0" cy="0" rx={rx} ry={ry} fill="#ffffff" opacity={isMain ? 0.85 : 0.6} />
-              {/* Crown sits just above the top of the face ellipse (cy - ry) */}
-              <g transform={`translate(0, ${-ry})`}>
-                <Crown scale={crownScale} />
-              </g>
-              {/* Mustache sits just below center of the face ellipse */}
-              <g transform={`translate(0, ${ry * 0.15})`}>
-                <Mustache scale={crownScale * 0.8} />
-              </g>
-            </motion.g>
-          );
-        })}
-      </svg>
-    </div>
-  );
 }
 
 /**
