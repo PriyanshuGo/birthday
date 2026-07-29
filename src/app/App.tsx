@@ -120,15 +120,28 @@ export default function App() {
     setCelebrationTriggered(false);
   };
 
-  const handleWishSubmit = (wish: string) => {
-    setWishes((prev) => [...prev, wish]);
+const handleWishSubmit = async (wish: string) => {
+  try {
+    const response = await fetch("https://formspree.io/f/xdaqjoad", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
+      body: JSON.stringify({
+        message: wish,
+      }),
+    });
 
-    // Stop recording (finalizes and uploads to Cloudinary on the backend)
-    // when a wish is submitted
-    if (ENABLE_RECORDING) {
-      canvasRecorder.stop();
+    if (!response.ok) {
+      throw new Error("Failed to submit wish");
     }
-  };
+
+    console.log("Wish sent!");
+  } catch (error) {
+    console.error(error);
+  }
+};
 
   return (
     <div className="min-h-screen relative">

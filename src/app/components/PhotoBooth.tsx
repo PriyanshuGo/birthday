@@ -2,13 +2,17 @@ import { motion, AnimatePresence } from 'motion/react';
 import { Button } from './ui/button';
 import { Card } from './ui/card';
 import { Camera, Download, X } from 'lucide-react';
-
+import { MoreVertical } from "lucide-react";
+import { useState } from 'react';
 interface PhotoBoothProps {
   photos: string[];
   setPhotos: React.Dispatch<React.SetStateAction<string[]>>;
 }
 
 export function PhotoBooth({ photos, setPhotos }: PhotoBoothProps) {
+
+  const [openMenu, setOpenMenu] = useState<number | null>(null);
+
   const downloadPhoto = (imageData: string, index: number) => {
     const link = document.createElement('a');
     link.download = `birthday-photo-${index + 1}.png`;
@@ -27,7 +31,8 @@ export function PhotoBooth({ photos, setPhotos }: PhotoBoothProps) {
       </div>
 
       {/* Photo gallery */}
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-4"
+        onClick={() => setOpenMenu(null)}>
         <AnimatePresence>
           {photos.map((photo, index) => (
             <motion.div
@@ -42,21 +47,52 @@ export function PhotoBooth({ photos, setPhotos }: PhotoBoothProps) {
                 alt={`Birthday photo ${index + 1}`}
                 className="w-full h-full object-cover rounded-lg shadow-lg transform scale-x-[-1]"
               />
-              <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center gap-2">
+              <div className="absolute top-2 right-2">
                 <Button
-                  size="sm"
+                  size="icon"
                   variant="secondary"
-                  onClick={() => downloadPhoto(photo, index)}
+                  className="h-8 w-8 rounded-full bg-white/90"
+                  onClick={(e) => {
+                    e.stopPropagation(); // Don't let the click reach the gallery
+                    setOpenMenu(openMenu === index ? null : index);
+                  }}
                 >
-                  <Download className="w-4 h-4" />
+                  <MoreVertical className="w-4 h-4" />
                 </Button>
-                <Button
-                  size="sm"
-                  variant="destructive"
-                  onClick={() => deletePhoto(index)}
-                >
-                  <X className="w-4 h-4" />
-                </Button>
+
+                <AnimatePresence>
+                  {openMenu === index && (
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0.95, y: -8 }}
+                      animate={{ opacity: 1, scale: 1, y: 0 }}
+                      exit={{ opacity: 0, scale: 0.95, y: -8 }}
+                      className="absolute top-12 right-2 bg-white rounded-xl shadow-xl border overflow-hidden z-20 min-w-[140px]"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <button
+                        onClick={() => {
+                          downloadPhoto(photo, index);
+                          setOpenMenu(null);
+                        }}
+                        className="flex items-center w-full px-4 py-3 hover:bg-gray-100"
+                      >
+                        <Download className="w-4 h-4 mr-2" />
+                        Download
+                      </button>
+
+                      <button
+                        onClick={() => {
+                          deletePhoto(index);
+                          setOpenMenu(null);
+                        }}
+                        className="flex items-center w-full px-4 py-3 text-red-600 hover:bg-red-50"
+                      >
+                        <X className="w-4 h-4 mr-2" />
+                        Delete
+                      </button>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
             </motion.div>
           ))}
