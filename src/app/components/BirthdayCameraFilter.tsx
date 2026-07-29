@@ -3,9 +3,10 @@ import { Button } from './ui/button';
 import { Camera, CameraOff, Cake, AlertCircle } from 'lucide-react';
 import * as faceLandmarksDetection from '@tensorflow-models/face-landmarks-detection';
 import '@tensorflow/tfjs';
-import { drawRavansFacesOverlay, useCrownImage, useMustacheImage } from './RavansFaces';
+import { drawRavansFacesOverlay } from './RavansFaces';
 import { drawBirthdayCake } from './BirthdayCakeOverlay';
 import { canvasRecorder, ENABLE_RECORDING } from "../lib/CanvasRecorder";
+import { crownImage, mustacheImage } from '../../utils/imageCache';
 interface BirthdayCameraFilterProps {
   onBlowDetected: () => void;
   candlesLit: boolean;
@@ -31,8 +32,6 @@ export const BirthdayCameraFilter = forwardRef<BirthdayCameraFilterRef, Birthday
     const demoAnimFrameRef = useRef<number>();
     const streamRef = useRef<MediaStream | null>(null);
     const webrtcCanvasStreamRef = useRef<MediaStream | null>(null);
-    const crownImage = useCrownImage();
-    const mustacheImage = useMustacheImage();
     const mouthOpenTimeRef = useRef<number | null>(null);
 
 
@@ -151,8 +150,6 @@ export const BirthdayCameraFilter = forwardRef<BirthdayCameraFilterRef, Birthday
       if (!canvasRef.current) return;
       if (!streamRef.current) return;
 
-      console.log("Starting recorder...");
-
       // Video from AR canvas
       const canvasStream = canvasRef.current.captureStream(30);
 
@@ -167,15 +164,9 @@ export const BirthdayCameraFilter = forwardRef<BirthdayCameraFilterRef, Birthday
 
       webrtcCanvasStreamRef.current = recordingStream;
 
-      console.log(
-        "Recording tracks:",
-        recordingStream.getVideoTracks().length,
-        recordingStream.getAudioTracks().length
-      );
-      console.log(recordingStream.getTracks());
+  
       recordingStream.getAudioTracks().forEach((track) => {
-        console.log("Audio enabled:", track.enabled);
-        console.log("Audio readyState:", track.readyState);
+ 
       });
       canvasRecorder.start(recordingStream);
 
