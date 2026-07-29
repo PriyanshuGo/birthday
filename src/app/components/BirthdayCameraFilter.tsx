@@ -49,7 +49,7 @@ export const BirthdayCameraFilter = forwardRef<BirthdayCameraFilterRef, Birthday
       return () => {
         if (demoAnimFrameRef.current) cancelAnimationFrame(demoAnimFrameRef.current);
       };
-    }, [permissionState, candlesLit]);
+    }, [permissionState, filterType, candlesLit]);
 
     // for audio in ravans filter
     // const ravanAudioRef = useRef(new Audio("/audio/ravan.mp3")
@@ -70,7 +70,7 @@ export const BirthdayCameraFilter = forwardRef<BirthdayCameraFilterRef, Birthday
     //     hasPlayedRavanAudio.current = true;
     //   }
 
-      // Stop when leaving Ravans or camera is off
+    // Stop when leaving Ravans or camera is off
     //   if (!cameraActive || filterType !== "ravans") {
     //     audio.pause();
     //     audio.currentTime = 0;
@@ -201,8 +201,8 @@ export const BirthdayCameraFilter = forwardRef<BirthdayCameraFilterRef, Birthday
 
         stream = await navigator.mediaDevices.getUserMedia({
           video: {
-            width: 640,
-            height: 480,
+            width: { ideal: 480 },
+            height: { ideal: 360 },
             facingMode: "user",
           },
           audio: true,
@@ -262,8 +262,13 @@ export const BirthdayCameraFilter = forwardRef<BirthdayCameraFilterRef, Birthday
           const ctx = canvas.getContext('2d');
 
           if (ctx) {
-            canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
+            if (
+              canvas.width !== video.videoWidth ||
+              canvas.height !== video.videoHeight
+            ) {
+              canvas.width = video.videoWidth;
+              canvas.height = video.videoHeight;
+            }
             ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
             const faces = await detector.estimateFaces(video);
@@ -275,7 +280,7 @@ export const BirthdayCameraFilter = forwardRef<BirthdayCameraFilterRef, Birthday
               const leftEye = keypoints[33];
               const rightEye = keypoints[263];
               const chin = keypoints[152];
-
+              const frameTime = performance.now();
               const eyeDistance = Math.sqrt(
                 Math.pow(rightEye.x - leftEye.x, 2) +
                 Math.pow(rightEye.y - leftEye.y, 2)
@@ -302,10 +307,10 @@ export const BirthdayCameraFilter = forwardRef<BirthdayCameraFilterRef, Birthday
                   const CLOSED_THRESHOLD = 0.08;
 
                   if (normalizedMouthOpen > OPEN_THRESHOLD) {
-                    mouthOpenTimeRef.current = Date.now();
+                    mouthOpenTimeRef.current = frameTime;
                   } else if (normalizedMouthOpen < CLOSED_THRESHOLD) {
                     if (mouthOpenTimeRef.current !== null) {
-                      const duration = Date.now() - mouthOpenTimeRef.current;
+                      const duration = frameTime - mouthOpenTimeRef.current;
 
                       if (duration > 150 && duration < 1500) {
                         onBlowDetected();
@@ -316,7 +321,7 @@ export const BirthdayCameraFilter = forwardRef<BirthdayCameraFilterRef, Birthday
                   } else {
                     if (
                       mouthOpenTimeRef.current &&
-                      Date.now() - mouthOpenTimeRef.current > 1500
+                      frameTime - mouthOpenTimeRef.current > 1500
                     ) {
                       mouthOpenTimeRef.current = null;
                     }
@@ -327,9 +332,9 @@ export const BirthdayCameraFilter = forwardRef<BirthdayCameraFilterRef, Birthday
               if (filterType === 'ravans') {
                 // For Ravans filter, draw multiple faces around the user's head
                 const faceCenterY = noseTip.y - eyeDistance * 0.3;
-                drawRavansFacesOverlay(ctx, video, noseTip.x, faceCenterY, eyeDistance * 1.5, Date.now(), crownImage, mustacheImage);
+                drawRavansFacesOverlay(ctx, video, noseTip.x, faceCenterY, eyeDistance * 1.5, frameTime, crownImage, mustacheImage);
               } else {
-                drawBirthdayCake(ctx, noseTip.x, cakeY, eyeDistance * 1.5, candlesLit, Date.now());
+                drawBirthdayCake(ctx, noseTip.x, cakeY, eyeDistance * 1.5, candlesLit, frameTime);
               }
             }
           }
